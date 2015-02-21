@@ -22,43 +22,12 @@ module.exports = function(grunt) {
 
         // Watches files for changes and runs tasks based on the changed files
         watch: {
-            bower: {
-                files: ['bower.json'],
-                tasks: ['bowerInstall']
-            },
-            js: {
-                files: ['<%= config.src %>/{,*/}*.js'],
-                tasks: ['build'],
-                options: {
-                    livereload: true
-                }
-            },
-            gruntfile: {
-                files: ['Gruntfile.js']
-            },
-            page: {
-                files: ['<%= config.src %>/{,*/}*.html'],
-                tasks: ['build'],
-                options: {
-                    livereload: true
-                }
-            },
-            styles: {
-                files: ['<%= config.src %>/assets/{,*/}*.css'],
-                tasks: ['build'],
-                options: {
-                    livereload: true
-                }
-            },
-            livereload: {
+            dev: {
+                files: ['<%= config.src %>/**/*.js', '<%= config.src %>/**/*.html', '<%= config.src %>/assets/**/*.css'],
+                tasks: ['build-dev'],
                 options: {
                     livereload: '<%= connect.options.livereload %>'
-                },
-                files: [
-                    '<%= config.src %>/**/*.js',
-                    '<%= config.src %>/*.html',
-                    '<%= config.src %>/assets/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
-                ]
+                }
             }
         },
 
@@ -97,10 +66,12 @@ module.exports = function(grunt) {
         concat: {
             prod: {
                 src: ['<%= config.src %>/artgen/_head.js',
-                      '<%= config.src %>/artgen/artgen.js',
-                      '<%= config.src %>/artgen/brushes/**/*.js',
-                      '<%= config.src %>/artgen/painters/**/*.js',
-                      '<%= config.src %>/artgen/_foot.js'],
+                    '<%= config.src %>/artgen/artgen.js',
+                    '<%= config.src %>/artgen/base/**/*.js',
+                    '<%= config.src %>/artgen/brushes/**/*.js',
+                    '<%= config.src %>/artgen/painters/**/*.js',
+                    '<%= config.src %>/artgen/_foot.js'
+                ],
                 dest: '<%= config.dist %>/artgen/artgen.js',
             }
         },
@@ -193,18 +164,22 @@ module.exports = function(grunt) {
 
     grunt.registerTask('dev', function() {
         grunt.task.run([
-            'build',
+            'build-dev',
             'concurrent:chrome',
             'connect:chrome',
-            'watch'
+            'watch:dev'
         ]);
     });
 
-    grunt.registerTask('build', [
+    grunt.registerTask('build-dev', [
         'clean:dist',
         'concurrent:dist',
         'concat:prod',
         'copy',
+    ]);
+
+    grunt.registerTask('build', [
+        'build-dev',
         'htmlmin'
     ]);
 
