@@ -1,7 +1,7 @@
 // Generated on 2014-11-15 using generator-chrome-extension 0.2.6
 'use strict';
 
-module.exports = function (grunt) {
+module.exports = function(grunt) {
 
     // Load grunt tasks automatically
     require('load-grunt-tasks')(grunt);
@@ -27,7 +27,7 @@ module.exports = function (grunt) {
                 tasks: ['bowerInstall']
             },
             js: {
-                files: ['<%= config.src %>/scripts/{,*/}*.js'],
+                files: ['<%= config.src %>/{,*/}*.js'],
                 tasks: ['build'],
                 options: {
                     livereload: true
@@ -44,7 +44,7 @@ module.exports = function (grunt) {
                 }
             },
             styles: {
-                files: ['<%= config.src %>/styles/{,*/}*.css'],
+                files: ['<%= config.src %>/assets/{,*/}*.css'],
                 tasks: ['build'],
                 options: {
                     livereload: true
@@ -57,7 +57,7 @@ module.exports = function (grunt) {
                 files: [
                     '<%= config.src %>/**/*.js',
                     '<%= config.src %>/*.html',
-                    '<%= config.src %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+                    '<%= config.src %>/assets/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
                 ]
             }
         },
@@ -82,8 +82,7 @@ module.exports = function (grunt) {
 
         // Empties folders to start fresh
         clean: {
-            chrome: {
-            },
+            chrome: {},
             dist: {
                 files: [{
                     dot: true,
@@ -92,6 +91,17 @@ module.exports = function (grunt) {
                         '!<%= config.dist %>/.git*'
                     ]
                 }]
+            }
+        },
+
+        concat: {
+            prod: {
+                src: ['<%= config.src %>/artgen/_head.js',
+                      '<%= config.src %>/artgen/artgen.js',
+                      '<%= config.src %>/artgen/brushes/**/*.js',
+                      '<%= config.src %>/artgen/painters/**/*.js',
+                      '<%= config.src %>/artgen/_foot.js'],
+                dest: '<%= config.dist %>/artgen/artgen.js',
             }
         },
 
@@ -149,12 +159,10 @@ module.exports = function (grunt) {
                     dest: '<%= config.dist %>',
                     src: [
                         '*.{ico,png,txt}',
-                        'images/{,*/}*.{png,gif,jpg}',
+                        'assets/{,*/}*.{png,gif,jpg}',
                         '{,*/}*.html',
-                        'styles/{,*/}*.css',
-                        'styles/fonts/{,*/}*.*',
-                        '_locales/{,*/}*.json',
-                        'scripts/{,*/}*.js'
+                        'assets/styles/{,*/}*.css',
+                        'assets/fonts/{,*/}*.*'
                     ]
                 }]
             },
@@ -173,19 +181,17 @@ module.exports = function (grunt) {
 
         // Run some tasks in parallel to speed up build process
         concurrent: {
-            chrome: [
-            ],
+            chrome: [],
             dist: [
                 'imagemin',
                 'svgmin'
             ],
-            test: [
-            ]
+            test: []
         }
 
     });
 
-    grunt.registerTask('dev', function () {
+    grunt.registerTask('dev', function() {
         grunt.task.run([
             'build',
             'concurrent:chrome',
@@ -197,6 +203,7 @@ module.exports = function (grunt) {
     grunt.registerTask('build', [
         'clean:dist',
         'concurrent:dist',
+        'concat:prod',
         'copy',
         'htmlmin'
     ]);
