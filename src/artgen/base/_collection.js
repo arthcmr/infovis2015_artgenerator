@@ -1,7 +1,7 @@
 //Brushes collection
 
 //starts a collection
-var Collection = function(base) {
+function Collection (base) {
     this._base = base;
 };
 

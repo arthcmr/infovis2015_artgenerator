@@ -66,8 +66,8 @@ module.exports = function(grunt) {
         concat: {
             prod: {
                 src: ['<%= config.src %>/artgen/_head.js',
-                    '<%= config.src %>/artgen/artgen.js',
                     '<%= config.src %>/artgen/base/**/*.js',
+                    '<%= config.src %>/artgen/artgen.js',
                     '<%= config.src %>/artgen/brushes/**/*.js',
                     '<%= config.src %>/artgen/painters/**/*.js',
                     '<%= config.src %>/artgen/_foot.js'

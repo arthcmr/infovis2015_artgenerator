@@ -2,18 +2,11 @@
 
 ARTGEN = {};
 
-/* 
- * starts the art generator
- */
-ARTGEN.init = function() {
-    console.log("Starting ARTGEN");
-};
-
 //starts the collection of brushes
-ARTGEN.brushes = new Collection(baseBrush);
+ARTGEN._brushes = new Collection(baseBrush);
 
 //starts the collection of painters
-ARTGEN.painters = new Collection(basePainter);
+ARTGEN._painters = new Collection(basePainter);
 
 /* 
  * adds a new brush to the collection
@@ -23,7 +16,7 @@ ARTGEN.painters = new Collection(basePainter);
  * @param {Object} methods Methods of the new brush
  */
 ARTGEN.addBrush = function(name, extend, method) {
-	this.brushes.add(name, extend, method);
+	this._brushes.add(name, extend, method);
 };
 
 /* 
@@ -34,5 +27,29 @@ ARTGEN.addBrush = function(name, extend, method) {
  * @param {Object} methods Methods of the new painter
  */
 ARTGEN.addPainter = function(name, extend, method) {
-	this.painters.add(name, extend, method);
+	this._painters.add(name, extend, method);
+};
+
+/* 
+ * starts the art generator
+ */
+ARTGEN.init = function(canvas_id, painter) {
+    console.log("Starting ARTGEN on", canvas_id);
+
+    //set up the canvas
+    var canvas  = document.getElementById(canvas_id);
+    var ctx     = canvas.getContext('2d');
+
+    canvas.width = parseInt(canvas.offsetWidth, 10);
+    canvas.height = parseInt(canvas.offsetHeight, 10);
+
+    this.painter = this._painters.get(painter);
+    this.painter.init(canvas, ctx);
+
+    var _this = this;
+    return {
+    	paint: function() {
+    		_this.painter.paint();
+    	}
+    }
 };

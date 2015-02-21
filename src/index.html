@@ -3,15 +3,20 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Project</title>
-	<!-- <link rel="stylesheet" type="text/css" href="styles/main.css"> -->
+	<link rel="stylesheet" type="text/css" href="assets/styles/main.css">
 </head>
 <body>
-	<h1>Hello World!</h1>
+	<canvas id="visualization"></canvas>
 
 	<script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
+	<script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
 	<script type="text/javascript" src="artgen/artgen.js"></script>
 	<script type="text/javascript">
-		ARTGEN.init();
+		var leo = ARTGEN.init("visualization", "leonardo");
+		leo.paint();
+		setInterval(function() {
+			leo.paint();
+		}, 2000);
 	</script>
 </body>
 </html>
