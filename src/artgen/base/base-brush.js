@@ -1,41 +1,36 @@
 //Base brush
 
-var baseBrush = {
+/* 
+ * base brush constructor
+ * @param {Object} canvas canvas object
+ * @param {Object} ctx Canvas context
+ */
+var baseBrush = function() {}
 
-	isDrawing: false,
+/* 
+ * initializes a painter
+ */
+baseBrush.prototype.init = function() {
+    this.isDrawing = false;
+};
 
-	/* 
-     * initialization function
-     */
-	init: function() {
-		//placeholder method
-	},
+/* 
+ * start method
+ */
+baseBrush.prototype.start = function(x,y) {
+    this.isDrawing = true;
+};
 
-	/* 
-     * start function
-     */
-	start: function(x,y) {
-		this.isDrawing = true;
-	},
+/* 
+ * stop method
+ */
+baseBrush.prototype.stop = function() {
+    this.isDrawing = false;
+};
 
-	/* 
-     * stop function
-     */
-	stop: function() {
-		this.isDrawing = false;
-	},
-
-	/* 
-     * move function
-     */
-	move: function(x,y) {
-		//placeholder method
-	},
-
-	/* 
-     * chose color
-     */
-    setColor: function(color) {
-    	this.color = color;
-    }
+/* 
+ * choose brush color
+ */
+baseBrush.prototype.setColor = function(color) {
+    this.color = color;
 };

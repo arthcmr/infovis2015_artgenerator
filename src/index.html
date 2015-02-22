@@ -6,17 +6,23 @@
 	<link rel="stylesheet" type="text/css" href="assets/styles/main.css">
 </head>
 <body>
-	<canvas id="visualization"></canvas>
+	<canvas id="visualization" class="visualization"></canvas>
+	<canvas id="visualization2" class="visualization"></canvas>
 
 	<script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
 	<script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
 	<script type="text/javascript" src="artgen/artgen.js"></script>
 	<script type="text/javascript">
+
 		var leo = ARTGEN.init("visualization", "leonardo");
+		var theo = ARTGEN.init("visualization2", "gogh");
+	
 		leo.paint();
+		theo.paint();
 		setInterval(function() {
 			leo.paint();
-		}, 2000);
+			theo.paint();
+		}, 500);
 	</script>
 </body>
 </html>

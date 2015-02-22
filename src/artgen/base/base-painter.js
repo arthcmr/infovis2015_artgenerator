@@ -1,35 +1,39 @@
 //Base painter
 
-var basePainter = {
-	/* 
-     * brushes that the painter uses
-     */
-    brushes: [],
+/* 
+ * base painter constructor
+ * @param {Object} canvas canvas object
+ * @param {Object} ctx Canvas context
+ */
+var basePainter = function () {};
 
-    /* 
-     * adds a new item to the set
-     * @param {Object} canvas
-     * @param {Object} ctx
-     */
-    init: function(canvas, ctx) {
-        this.canvas = canvas;
-        this.ctx = ctx;
-        for (var i = 0; i < this.brushes.length; i++) {
-            this.brushes[i] = ARTGEN._brushes.get(this.brushes[i]);
-        };
-    },
+/* 
+ * empty set of brushes
+ */
+basePainter.prototype.brushes = [];
 
-    /* 
-     * setup bruhes
-     */
-    setup: function() {
-    	//placeholder method
-    },
+/* 
+ * initializes a painter
+ */
+basePainter.prototype.init = function(canvas, ctx) {
+    this.canvas = canvas;
+    this.ctx = ctx;
+    for (var i = 0; i < this.brushes.length; i++) {
+        this.brushes[i] = new ARTGEN._brushes.get(this.brushes[i])();
+        this.brushes[i].init();
+    };
+};
 
-    /* 
-     * gets one of the brushes that this painter uses
-     */
-    getBrush: function(name) {
-        return this.brushes[name];
-    }
+/* 
+ * setup bruhes
+ */
+basePainter.prototype.setup = function() {
+    //placeholder method
+};
+
+/* 
+ * gets one of the brushes that this painter uses
+ */
+basePainter.prototype.getBrush = function(name) {
+    return this.brushes[name];
 };

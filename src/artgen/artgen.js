@@ -36,20 +36,23 @@ ARTGEN.addPainter = function(name, extend, method) {
 ARTGEN.init = function(canvas_id, painter) {
     console.log("Starting ARTGEN on", canvas_id);
 
+    var instance = {};
     //set up the canvas
-    var canvas  = document.getElementById(canvas_id);
-    var ctx     = canvas.getContext('2d');
+    instance._canvas  = document.getElementById(canvas_id);
+    instance._ctx     = instance._canvas.getContext('2d');
 
-    canvas.width = parseInt(canvas.offsetWidth, 10);
-    canvas.height = parseInt(canvas.offsetHeight, 10);
+    instance._canvas.width = parseInt(instance._canvas.offsetWidth, 10);
+    instance._canvas.height = parseInt(instance._canvas.offsetHeight, 10);
 
-    this.painter = this._painters.get(painter);
-    this.painter.init(canvas, ctx);
+    //get the painter from the collection and initialize it
+    var p = this._painters.get(painter);
+    instance.painter = new p();
+    instance.painter.init(instance._canvas, instance._ctx);
 
-    var _this = this;
-    return {
-    	paint: function() {
-    		_this.painter.paint();
-    	}
+    //public API for this instance
+    instance.paint = function() {
+        this.painter.paint();
     }
+
+    return instance;
 };

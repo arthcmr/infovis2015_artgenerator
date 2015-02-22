@@ -26,7 +26,10 @@ Collection.prototype.add = function(name, extend, methods) {
     }
 
     //add item
-    this._items[name] = _.extend(from, methods);
+    var new_item = function() {};
+    new_item.prototype = Object.create(_.extend({}, from.prototype, methods));
+    new_item.prototype.constructor = from.prototype.constructor;
+    this._items[name] = new_item;
 }
 
 /* 
