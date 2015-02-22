@@ -50,8 +50,15 @@ ARTGEN.init = function(canvas_id, painter) {
     instance.painter.init(instance._canvas, instance._ctx);
 
     //public API for this instance
+    instance.data = 0;
     instance.paint = function() {
-        this.painter.paint();
+        var c = 0;
+        this._interval = setInterval(function(d, i) {
+            instance.painter.paint(c++, instance.data);
+        }, 25);
+    }
+    instance.stop = function() {
+        clearInterval(this._interval);
     }
 
     return instance;

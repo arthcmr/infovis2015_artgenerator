@@ -19,7 +19,8 @@ basePainter.prototype.init = function(canvas, ctx) {
     this.canvas = canvas;
     this.ctx = ctx;
     for (var i = 0; i < this.brushes.length; i++) {
-        this.brushes[i] = new ARTGEN._brushes.get(this.brushes[i])();
+        var brush = ARTGEN._brushes.get(this.brushes[i]);
+        this.brushes[i] = new brush();
         this.brushes[i].init();
     };
 };
