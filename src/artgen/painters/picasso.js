@@ -1,0 +1,1 @@
+ARTGEN.addPainter('picasso', 'leonardo', {});
