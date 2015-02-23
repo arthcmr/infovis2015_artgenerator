@@ -1,6 +1,6 @@
 //main file
 
-ARTGEN = {};
+var ARTGEN = {};
 
 //starts the collection of brushes
 ARTGEN._brushes = new Collection(baseBrush);
