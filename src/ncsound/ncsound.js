@@ -1,0 +1,325 @@
+/**
+ *	Audio JS for Art Generator
+ * 	Final project for KTH course DH2321 Information Visualization by M. Romero
+ *
+ * Arhur Câmara            arthurcamara@gmail.com
+ * Vera Fuest              vera.fuest@hotmail.de
+ * Mladen Milivojevic      milivojevicmladen@gmail.com		  
+ * Nora Tejada             ntexaa@gmail.com
+ * Midas Nouwens           nouwens@kth.se
+ * Konstantina Pantagaki   konstantina.pantagaki@gmail.com
+ * Alexandre Andrieux      andrieux@kth.se
+ *  
+ * Feb. 2015
+ *
+ */
+
+// Platform compatibility
+navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia);
+
+// NCSOUND object
+var NCSOUND = {};
+NCSOUND.protec = 0;
+NCSOUND.context = null;
+NCSOUND.source = null;
+NCSOUND.analyser = null;
+	
+// Stores urls to audio files and buffers once loaded with loadSound()
+NCSOUND.soundBank = [
+	{
+		name:'skrillex',
+		url:'sounds/skrillex.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'lindsey',
+		url:'sounds/lindsey.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'bumblebee',
+		url:'sounds/bumblebee.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'summer',
+		url:'sounds/summer.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'winter',
+		url:'sounds/winter.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+];
+
+/* 
+ * Initializes NCSOUND audio context and analyser
+ */
+NCSOUND.initAudioContext = function(){
+	try{
+		// Fix up for prefixing
+		window.AudioContext = window.AudioContext||window.webkitAudioContext;
+		this.context = new AudioContext();
+		// Create analyser
+		this.analyser = this.context.createAnalyser();
+	}
+	catch(e){
+		alert('The Web Audio API is not supported in this browser. Try using Chrome or Firefox');
+	}
+}
+
+/* 
+ * Fill the empty buffers of NGSOUND.soundBank with the desired sample
+ * @param {Number} soundIndex Index of sound to load in NGSOUND.soundBank
+ */
+NCSOUND.loadSound = function(soundIndex){
+	var sB = this.soundBank;
+	var ctx = this.context;
+	if(typeof sB[soundIndex] == 'undefined'){
+		console.log("There is no such sound! U fool.")
+		return;
+	}
+	else{
+		// Returns a buffer
+		var request = new XMLHttpRequest();
+		request.open('GET', sB[soundIndex].url, true);
+		request.responseType = 'arraybuffer';
+		
+		// Decode the response (asynchronously, XHR powa)
+		request.onload = function(){
+			ctx.decodeAudioData(request.response, function(theBuffer){
+				// Fill up the sound's potentially empty buffer in soundBank
+				sB[soundIndex].buffer = theBuffer;
+				sB[soundIndex].isBufferLoaded = true;
+				
+				console.log("Sound "+soundIndex+" has been successfully loaded.");
+				
+			}, function(){
+				// Error
+				console.log("Sound could not be loaded.");
+			});
+		}
+		request.send();
+	}
+}
+
+/* 
+ * Connects the sound pipeline and plays a sample from NGSOUND.soundBank
+ * @param {Number} soundIndex Index of sound to play in NGSOUND.soundBank
+ */
+NCSOUND.playSound = function(soundIndex){
+	if(!this.soundBank[soundIndex].isBufferLoaded){
+		console.log("The buffer is empty, the sound might not be loaded yet.")
+		return;
+	}
+	else{
+		// Create sound source
+		this.source = this.context.createBufferSource();
+		
+		// Assigns buffer from soundBank
+		this.source.buffer = this.soundBank[soundIndex].buffer;
+		
+		// Create the global analyser (and connect, otherwise returns arrays filled with the same value (minDecibles))
+		this.analyser = this.context.createAnalyser();
+		//analyser.minDecibels = -90;// Default is -100
+		//analyser.maxDecibels = -10;// Default is -30
+		//analyser.smoothingTimeConstant = 0.3;// Default is 0.8
+		this.source.connect(this.analyser);
+		
+		// Connect the source to the speakers (context destination)
+		this.source.connect(this.context.destination);
+		
+		// Start from beginning
+		this.source.start(0);
+		
+		console.log("Sound "+soundIndex+" has started!");
+	}
+}
+
+/* 
+ * Asks user permission for microphone input and connects NCSOUND.source to mike stream
+ */
+NCSOUND.startMikeStream = function(){
+	if (navigator.getUserMedia){
+		console.log('getUserMedia supported, stream about to start...');
+		var self = this;
+		navigator.getUserMedia(
+			// Constraints: audio only
+			{audio:true,video:false},
+			// Success callback
+			function(stream){
+				// Create a MediaStreamAudioSourceNode
+				self.source = self.context.createMediaStreamSource(stream);
+				// Connect the global analyser
+				
+				self.source.connect(self.analyser);
+				// And connect the whole lot to the speakers
+				self.analyser.connect(self.context.destination);
+			},
+			// Error callback
+			function(error){
+				console.log('Error in getUserMedia: ' + error);
+			}
+		);
+	}
+	else{
+		console.log("getUserMedia(...) failed in startMikeStream().");
+	}
+}
+
+/* 
+ * Starts analyzing the current source and calls NGSOUND.log()
+ */
+NCSOUND.startFeedbackStream = function(){
+
+	this.analyser.fftSize = 256;
+    var bufferLength = this.analyser.frequencyBinCount;
+	console.log("We are accessing the data related to "+bufferLength+" different frequencies.");
+    this.dataArray = new Float32Array(bufferLength);
+	
+	// Start the loop
+    this.log();
+}
+
+/* 
+ * Calls streamShape(...) to filter raw sound data and then draw(...). Will be replaced by an ARTGEN recieving method.
+ */
+NCSOUND.log = function(){
+	var self = this;
+	// So that this returns NCSOUND and not window at each recursive call
+	this.animFrame = requestAnimationFrame(function(){self.log();});
+	// This analyser method provides the actual data stream
+	// It fills dataArray with our frequency data
+	var dataArray = this.dataArray;
+	this.analyser.getFloatFrequencyData(dataArray);
+	
+	this.streamShape(dataArray);
+	if(++this.protec == 5){
+		this.draw(this.streamShape(dataArray));
+		this.protec = 0;
+	}
+}
+
+/* 
+ * Back-end main filtering function. Provides relevant analyzed data to ARTGEN
+ * @param {Array} freqData Raw frequency data
+ * @returns {Array} Relevant data stream for ARTGEN
+ */
+NCSOUND.streamShape = function(freqData){
+	// Current input stream:
+	// Raw frequency data
+	// Current output stream:
+	// CSS index of which tabs to highlight, max, 2nd and 3rd max freq amplitude
+	
+	var max1Key = 0;
+	var max2Key = 0;
+	var max3Key = 0;
+	var max1Val = freqData[0];
+	var max2Val = freqData[0];
+	var max3Val = freqData[0];
+	for (key in freqData){
+		// The maximum value and the corresponding index are stored
+		// As well as 2nd and 3rd highest values
+		if(freqData[key] > max3Val){
+			max3Val = freqData[key];
+			max3Key = key;
+		}
+		if(freqData[key] > max2Val){
+			// 2nd "swaps" with 3rd
+			max3Val = max2Val;
+			max3Key = max2Key;
+			max2Val = freqData[key];
+			max2Key = key;
+		}
+		if(freqData[key] > max1Val){
+			// 1st "swaps" with 2nd
+			max2Val = max1Val;
+			max2Key = max1Key;
+			max1Val = freqData[key];
+			max1Key = key;
+		}
+	}
+	var nthOfKey1 = parseInt(max1Key)+1;
+	var nthOfKey2 = parseInt(max2Key)+1;
+	var nthOfKey3 = parseInt(max3Key)+1;
+	
+	// In this basic version with red vertical bars
+	// the dataStream contains the index of the bars to be highlighted
+	// Starting from index 1 (for CSS nth-of-type)
+	var dataStream = [nthOfKey1,nthOfKey2,nthOfKey3];
+	
+	return dataStream;
+	
+	// Console.log some samples of the frequency data
+	//console.log("30th value:",freqData[29]/128);
+	//console.log("60th value:",freqData[59]/128);
+	//console.log("100th value:",freqData[99]/128);
+	//console.log("among "+freqData.length+" values.");
+}
+
+/* 
+ * Simplistic view with red vertical bars to highlight major frequencies
+ * Fills the DOM #whole node with vertical divs (provided the CSS is loaded)
+ */
+NCSOUND.DOMview = function(){
+	//var bars = 128;
+	var bars = 25;
+	var wid = jQuery('#whole').width();
+	for (var i=0;i<bars;i++){
+		jQuery('#whole').append("<div class='bar'></div>");
+		jQuery('.bar').css('width',wid/bars);
+	}
+}
+
+/* 
+ * Simplistic view with red vertical bars to highlight major frequencies
+ * Assigns and removes classes in the DOM for red bar highlight
+ * @param {Array} dataStream Relevant data stream for ARTGEN
+ */
+NCSOUND.draw = function(dataStream){
+
+	console.log(dataStream);
+	// Simplistic implementation with DOM elements
+	// This method should bind the back-end and front-end part of our project
+	
+	jQuery('.bar.focus1').removeClass('focus1');
+	jQuery('.bar.focus2').removeClass('focus2');
+	jQuery('.bar.focus3').removeClass('focus3');
+	jQuery('.bar:nth-of-type('+dataStream[0]+')').addClass('focus1');
+	jQuery('.bar:nth-of-type('+dataStream[1]+')').addClass('focus2');
+	jQuery('.bar:nth-of-type('+dataStream[2]+')').addClass('focus3');
+	
+}
+
+/** On start **/
+jQuery(document).ready(function(){
+	
+	// Could be triggered from a button.
+	NCSOUND.initAudioContext();
+	
+	NCSOUND.loadSound(0);
+	NCSOUND.loadSound(1);
+	NCSOUND.loadSound(2);
+	NCSOUND.loadSound(3);
+	NCSOUND.loadSound(4);
+	
+	// In the console
+	// Wait until sounds are loaded and:
+	//NCSOUND.playSound(0);
+	//NCSOUND.startFeedback();
+	
+	// Or
+	
+	//startMikeStream();
+	// Then accept access to microphone and:
+	//NCSOUND.startFeedback();
+	
+	// Only on my local initial index.html (Alex)
+	//NCSOUND.DOMview();
+});
