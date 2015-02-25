@@ -199,9 +199,8 @@ NCSOUND.log = function(){
 	var dataArray = this.dataArray;
 	this.analyser.getFloatFrequencyData(dataArray);
 	
-	this.streamShape(dataArray);
 	if(++this.protec == 5){
-		this.draw(this.streamShape(dataArray));
+		this.draw(this.streamShape(dataArray,2));
 		this.protec = 0;
 	}
 }
@@ -209,72 +208,115 @@ NCSOUND.log = function(){
 /* 
  * Back-end main filtering function. Provides relevant analyzed data to ARTGEN
  * @param {Array} freqData Raw frequency data
+ * @param {Number} id Id that detemines which stream processing to run
  * @returns {Array} Relevant data stream for ARTGEN
  */
-NCSOUND.streamShape = function(freqData){
-	// Current input stream:
-	// Raw frequency data
-	// Current output stream:
-	// CSS index of which tabs to highlight, max, 2nd and 3rd max freq amplitude
-	
-	var max1Key = 0;
-	var max2Key = 0;
-	var max3Key = 0;
-	var max1Val = freqData[0];
-	var max2Val = freqData[0];
-	var max3Val = freqData[0];
-	for (key in freqData){
-		// The maximum value and the corresponding index are stored
-		// As well as 2nd and 3rd highest values
-		if(freqData[key] > max3Val){
-			max3Val = freqData[key];
-			max3Key = key;
+NCSOUND.streamShape = function(freqData,id){
+	console.log(freqData);
+	var dataStream = [];;
+	if (id == 1){
+		// Input stream:
+		// Raw frequency data
+		// Output stream:
+		// CSS index of which tabs to highlight, max, 2nd and 3rd max freq amplitude
+		
+		var max1Key = 0;
+		var max2Key = 0;
+		var max3Key = 0;
+		var max1Val = freqData[0];
+		var max2Val = freqData[0];
+		var max3Val = freqData[0];
+		for (key in freqData){
+			// The maximum value and the corresponding index are stored
+			// As well as 2nd and 3rd highest values
+			if(freqData[key] > max3Val){
+				max3Val = freqData[key];
+				max3Key = key;
+			}
+			if(freqData[key] > max2Val){
+				// 2nd "swaps" with 3rd
+				max3Val = max2Val;
+				max3Key = max2Key;
+				max2Val = freqData[key];
+				max2Key = key;
+			}
+			if(freqData[key] > max1Val){
+				// 1st "swaps" with 2nd
+				max2Val = max1Val;
+				max2Key = max1Key;
+				max1Val = freqData[key];
+				max1Key = key;
+			}
 		}
-		if(freqData[key] > max2Val){
-			// 2nd "swaps" with 3rd
-			max3Val = max2Val;
-			max3Key = max2Key;
-			max2Val = freqData[key];
-			max2Key = key;
-		}
-		if(freqData[key] > max1Val){
-			// 1st "swaps" with 2nd
-			max2Val = max1Val;
-			max2Key = max1Key;
-			max1Val = freqData[key];
-			max1Key = key;
+		var nthOfKey1 = parseInt(max1Key)+1;
+		var nthOfKey2 = parseInt(max2Key)+1;
+		var nthOfKey3 = parseInt(max3Key)+1;
+		
+		// In this basic version with red vertical bars
+		// the dataStream contains the index of the bars to be highlighted
+		// Starting from index 1 (for CSS nth-of-type)
+		dataStream = [nthOfKey1,nthOfKey2,nthOfKey3];
+		
+		// Console.log some samples of the frequency data
+		//console.log("30th value:",freqData[29]/128);
+		//console.log("60th value:",freqData[59]/128);
+		//console.log("100th value:",freqData[99]/128);
+		//console.log("among "+freqData.length+" values.");
+	}
+	else if (id == 2){
+		// Input stream:
+		// Raw frequency data
+		// Output stream:
+		// CSS pixels height of amplitude for all frequencies
+		
+		for (key in freqData){
+			dataStream.push(freqData[key]+150);
 		}
 	}
-	var nthOfKey1 = parseInt(max1Key)+1;
-	var nthOfKey2 = parseInt(max2Key)+1;
-	var nthOfKey3 = parseInt(max3Key)+1;
-	
-	// In this basic version with red vertical bars
-	// the dataStream contains the index of the bars to be highlighted
-	// Starting from index 1 (for CSS nth-of-type)
-	var dataStream = [nthOfKey1,nthOfKey2,nthOfKey3];
-	
 	return dataStream;
-	
-	// Console.log some samples of the frequency data
-	//console.log("30th value:",freqData[29]/128);
-	//console.log("60th value:",freqData[59]/128);
-	//console.log("100th value:",freqData[99]/128);
-	//console.log("among "+freqData.length+" values.");
 }
 
 /* 
- * Simplistic view with red vertical bars to highlight major frequencies
- * Fills the DOM #whole node with vertical divs (provided the CSS is loaded)
+ * Fills the DOM with a new view for sound visualization. Used to understand the underlying behavior of sound rather than drawing beautiful art.
+ * @param {Number} id Id of view to be loaded as a front layer, created from scratch
  */
-NCSOUND.DOMview = function(){
-	//var bars = 128;
-	var bars = 25;
-	var wid = jQuery('#whole').width();
-	for (var i=0;i<bars;i++){
-		jQuery('#whole').append("<div class='bar'></div>");
-		jQuery('.bar').css('width',wid/bars);
+NCSOUND.DOMview = function(id){
+	// Add layer
+	jQuery('body').append("<div id='domview"+id+"'></div>")
+	// Shape layer
+	jQuery('#domview'+id).css('width','100%')
+		.css('height','100%')
+		.css('box-shadow','rgba(0,0,0,0.8) 0px 0px 15px')
+		.css('margin-left','100%')
+		.animate({
+			'margin-left':0
+		},500);
+	// Simplistic view with red vertical bars to highlight major frequencies
+	if(id == 1){
+		//var bars = 128;
+		var bars = 25;
+		var wid = jQuery('body').width();
+		for (var i=0;i<bars;i++){
+			jQuery('#domview1').append("<div class='bar'></div>");
+			jQuery('.bar').css('width',wid/bars);
+		}
 	}
+	else if(id == 2){
+		var bars = 64;
+		var wid = jQuery('body').width();
+		for (var i=0;i<bars;i++){
+			jQuery('#domview2').append("<div class='bar'></div>");
+			jQuery('.bar').css('width',wid/bars);
+		}
+	}
+}
+
+/* 
+ * Kills a DOMview
+ * @param {Number} id Id of view to be killed
+ */
+NCSOUND.killDOMview = function(id){
+	jQuery('#domview'+id).remove();
 }
 
 /* 
@@ -287,14 +329,18 @@ NCSOUND.draw = function(dataStream){
 	console.log(dataStream);
 	// Simplistic implementation with DOM elements
 	// This method should bind the back-end and front-end part of our project
-	
-	jQuery('.bar.focus1').removeClass('focus1');
-	jQuery('.bar.focus2').removeClass('focus2');
-	jQuery('.bar.focus3').removeClass('focus3');
-	jQuery('.bar:nth-of-type('+dataStream[0]+')').addClass('focus1');
-	jQuery('.bar:nth-of-type('+dataStream[1]+')').addClass('focus2');
-	jQuery('.bar:nth-of-type('+dataStream[2]+')').addClass('focus3');
-	
+	/*
+	jQuery('#domview1 .bar.focus1').removeClass('focus1');
+	jQuery('#domview1 .bar.focus2').removeClass('focus2');
+	jQuery('#domview1 .bar.focus3').removeClass('focus3');
+	jQuery('#domview1 .bar:nth-of-type('+dataStream[0]+')').addClass('focus1');
+	jQuery('#domview1 .bar:nth-of-type('+dataStream[1]+')').addClass('focus2');
+	jQuery('#domview1 .bar:nth-of-type('+dataStream[2]+')').addClass('focus3');
+	*/
+	var bars = jQuery('#domview2 .bar').each(function(index){
+		jQuery(this).css('margin-bottom',3*dataStream[index]);
+	});
+	// Comes with a CSS which I will upload soon.
 }
 
 /** On start **/
@@ -321,5 +367,11 @@ jQuery(document).ready(function(){
 	//NCSOUND.startFeedback();
 	
 	// Only on my local initial index.html (Alex)
-	//NCSOUND.DOMview();
+	//NCSOUND.DOMview(2);
+	
+	/*
+	NCSOUND.DOMview(2);
+	NCSOUND.playSound(3);
+	NCSOUND.startFeedbackStream();
+	*/
 });
