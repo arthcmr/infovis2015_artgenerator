@@ -13,7 +13,7 @@ ARTGEN.addBrush('flock', {
             COLOR: "rgba(255,255,255,0)",
             BOIDS: 40,
             MAX_SPEED: 4,
-            MAX_FORCE: 15,
+            MAX_FORCE: 30,
             MAX_SIZE: 2,
             DESIRED_SEPARATION: 9,
             NEIGHBOR_RADIUS: 150,
