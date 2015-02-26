@@ -19,7 +19,7 @@
     <script type="text/javascript">
     //make canvas full screen
 
-    var leo = ARTGEN.init("visualization", "gogh");
+    var leo = ARTGEN.init("visualization", "picasso");
 
     var canvas = document.getElementById('visualization');
     // resize the canvas to fill browser window dynamically
@@ -31,16 +31,16 @@
         leo.stop();
         leo.paint();
     }
-    resizeCanvas();
 	
 	setTimeout(function(){
 		//NCSOUND.startMikeStream();
 		NCSOUND.playSound(5);
-	},4000);
+	},500);
 	
 	setTimeout(function(){
-		NCSOUND.startFeedbackStream(leo);
-	},5000);
+       NCSOUND.startFeedbackStream(leo);    
+       resizeCanvas();
+	},1000);
 	
 	/*
     leo.data = Math.random();
