@@ -10,7 +10,7 @@ var baseBrush = function() {}
 /* 
  * initializes a painter
  */
-baseBrush.prototype.init = function() {
+baseBrush.prototype.init = function(ctx) {
     this.isDrawing = false;
 };
 
