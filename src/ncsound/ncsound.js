@@ -23,7 +23,11 @@ NCSOUND.protec = 0;
 NCSOUND.context = null;
 NCSOUND.source = null;
 NCSOUND.analyser = null;
-	
+NCSOUND.freqNoiseLevel = -60;
+NCSOUND.lastMaxDB = -100;
+NCSOUND.silenceDelay = 250;// In ms
+NCSOUND.lastSpokenTimestamp = null;
+
 // Stores urls to audio files and buffers once loaded with loadSound()
 NCSOUND.soundBank = [
 	{
@@ -53,6 +57,30 @@ NCSOUND.soundBank = [
 	{
 		name:'winter',
 		url:'ncsound/sounds/winter.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'priest',
+		url:'ncsound/sounds/priest.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'auction',
+		url:'ncsound/sounds/auction.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'airplane',
+		url:'ncsound/sounds/airplane.mp3',
+		buffer:null,
+		isBufferLoaded:false
+	},
+	{
+		name:'weather',
+		url:'ncsound/sounds/weather.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
@@ -178,7 +206,7 @@ NCSOUND.startMikeStream = function(){
  * @param {Object} ARTGENinstance
  */
 NCSOUND.startFeedbackStream = function(ARTGENinstance){
-	console.log(ARTGENinstance);
+
 	this.analyser.fftSize = 256;
     var bufferLength = this.analyser.frequencyBinCount;
 	console.log("We are accessing the data related to "+bufferLength+" different frequencies.");
@@ -202,7 +230,7 @@ NCSOUND.log = function(ARTGENinstance){
 	this.analyser.getFloatFrequencyData(dataArray);
 	
 	if(++this.protec == 10){
-		this.draw(ARTGENinstance,this.streamShape(dataArray,3));
+		this.draw(ARTGENinstance,this.streamShape(dataArray,4));
 		this.protec = 0;
 	}
 }
@@ -215,7 +243,7 @@ NCSOUND.log = function(ARTGENinstance){
  */
 NCSOUND.streamShape = function(freqData,id){
 
-	var dataStream = [];;
+	var dataStream = [];
 	if (id == 1){
 		// Input stream:
 		// Raw frequency data
@@ -276,9 +304,45 @@ NCSOUND.streamShape = function(freqData,id){
 		}
 	}
 	else if (id == 3){
+		// Amplitude of lowest pitch frequency
 		dataStream = [freqData[0]];
 	}
-	
+	else if (id == 4){
+		// From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
+		// Takes NCSOUND.lastSpokenTimestamp into account
+		var isSilent = true;
+		for (key in freqData){
+			if(freqData[key] > this.freqNoiseLevel){
+				isSilent = false;
+			}
+		}
+		// Speaking!
+		if(!isSilent){
+			this.lastSpokenTimestamp = new Date().getTime();
+			dataStream.push(1);
+		}
+		// Silent!
+		else{
+			if(new Date().getTime() - this.lastSpokenTimestamp > 250){
+				// Suddenly, silence.
+				dataStream.push(0);
+			}
+			else{
+				// The silence is too young.
+				dataStream.push(1);
+			}
+		}
+	}
+	else if (id == 5){
+		// From raw freq data to sound level increasing or decreasing (compared max value among freq between 2 timeframes)
+		this.lastMaxDB = -100;
+		for (key in freqData){
+			if(freqData[key] > this.lastMaxDB){
+				this.lastMaxDB = freqData[key];
+			}
+		}
+		dataStream.push(this.lastMaxDB);
+	}
 	return dataStream;
 }
 
@@ -337,22 +401,37 @@ NCSOUND.draw = function(ARTGENinstance,dataStream){
 	// Simplistic implementation with DOM elements
 	// This method should bind the back-end and front-end part of our project
 	/*
+	// Stream type & DOMview 1
 	jQuery('#domview1 .bar.focus1').removeClass('focus1');
 	jQuery('#domview1 .bar.focus2').removeClass('focus2');
 	jQuery('#domview1 .bar.focus3').removeClass('focus3');
 	jQuery('#domview1 .bar:nth-of-type('+dataStream[0]+')').addClass('focus1');
 	jQuery('#domview1 .bar:nth-of-type('+dataStream[1]+')').addClass('focus2');
 	jQuery('#domview1 .bar:nth-of-type('+dataStream[2]+')').addClass('focus3');
-	*/
-	/*
+	
+	// Stream type & DOMview 2
 	var bars = jQuery('#domview2 .bar').each(function(index){
 		jQuery(this).css('margin-bottom',3*dataStream[index]);
 	});
 	// Comes with a CSS which I will upload soon.
-	*/
+	var haveToPutCSS = true;
 	
-	ARTGENinstance.data = 1+dataStream[0]/100;
-	console.log(1+dataStream[0]/100);
+	// Stream type 3
+	var inRange = Math.min(Math.max(1+dataStream[0]/100,0),1);
+	ARTGENinstance.data = inRange;
+	console.log(inRange);
+	*/
+	// Stream type 4
+	console.log(dataStream[0]);
+	ARTGENinstance.data = dataStream[0];
+	(dataStream[0] == 1 ? jQuery('body').css('background','white') : jQuery('body').css('background','black'));
+	/*
+	// Stream type 5
+	var inRange = Math.min(Math.max(1+dataStream[0]/100,0),1);
+	ARTGENinstance.data = inRange;
+	console.log(inRange);
+*/
+	
 }
 
 /** On start **/
@@ -366,6 +445,10 @@ jQuery(document).ready(function(){
 	NCSOUND.loadSound(2);
 	NCSOUND.loadSound(3);
 	NCSOUND.loadSound(4);
+	NCSOUND.loadSound(5);
+	NCSOUND.loadSound(6);
+	NCSOUND.loadSound(7);
+	NCSOUND.loadSound(8);
 	
 	// In the console
 	// Wait until sounds are loaded and:
