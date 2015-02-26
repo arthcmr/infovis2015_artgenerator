@@ -34,7 +34,7 @@ ARTGEN.addPainter('gogh', {
     	var target_x = min_x + x, target_y = min_y + (data * max_height);
 
     	if(!this._instantiated) {
-    		this.color = "#dddddd";
+    		this.color = "#F1F1EA";
             this.ctx.beginPath();
             this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
             this.ctx.fillStyle = this.color;
