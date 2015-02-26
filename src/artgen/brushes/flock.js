@@ -9,7 +9,7 @@ ARTGEN.addBrush('flock', {
         this._enabled = false;
 
         //general settings
-        this._settings = {
+        this._settings = _.extend({
             COLOR: "rgba(255,255,255,0)",
             BOIDS: 40,
             MAX_SPEED: 4,
@@ -25,8 +25,9 @@ ARTGEN.addBrush('flock', {
             TARGET_FORCE: 2000,
             TARGET_COHESION: 0.1,
             BOID_STYLE: 2,
-            DRAW_TRAILS: false
-        };
+            DRAW_TRAILS: false,
+            LINE_WIDTH: 1,
+        }, (this._settings || {}) );
 
         this.boids = [];
 
@@ -199,7 +200,7 @@ ARTGEN.addBrush('flock', {
                     this.ctx.fillRect(this.loc.x, this.loc.y, Math.min(vv * 5, settings.MAX_SIZE), Math.min(vv * 5, settings.MAX_SIZE));
                     break;
                 case BoidStyleEnum.Line:
-                    this.ctx.lineWidth = 2;
+                    this.ctx.lineWidth = settings.LINE_WIDTH;
                     this.ctx.strokeStyle = color;
                     this.ctx.beginPath();
                     this.ctx.moveTo(this.loc.x, this.loc.y);

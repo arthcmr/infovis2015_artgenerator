@@ -27,7 +27,7 @@ Collection.prototype.add = function(name, extend, methods) {
 
     //add item
     var new_item = function() {};
-    new_item.prototype = Object.create(_.extend({}, from.prototype, methods));
+    new_item.prototype = _.clone(_.extend({}, from.prototype, methods));
     new_item.prototype.constructor = from.prototype.constructor;
     this._items[name] = new_item;
 }
