@@ -11,9 +11,11 @@
     <canvas id="visualization" class="visualization"></canvas>
     <!-- <canvas id="visualization2" class="visualization"></canvas> -->
 
+    <script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
     <script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
     <script type="text/javascript" src="artgen/artgen.js"></script>
+    <script type="text/javascript" src="ncsound/ncsound.js"></script>
     <script type="text/javascript">
     //make canvas full screen
 
@@ -30,12 +32,22 @@
         leo.paint();
     }
     resizeCanvas();
-
+	
+	setTimeout(function(){
+		//NCSOUND.startMikeStream();
+		//NCSOUND.playSound(0);
+	},2500);
+	
+	setTimeout(function(){
+		NCSOUND.startFeedbackStream(leo);
+	},5000);
+	
+	/*
     leo.data = Math.random();
     setInterval(function() {
         leo.data = Math.random();
     }, 500);
-
+	*/
     // theo.paint();
     </script>
 </body>
