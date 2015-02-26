@@ -28,31 +28,31 @@ NCSOUND.analyser = null;
 NCSOUND.soundBank = [
 	{
 		name:'skrillex',
-		url:'sounds/skrillex.mp3',
+		url:'ncsound/sounds/skrillex.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
 	{
 		name:'lindsey',
-		url:'sounds/lindsey.mp3',
+		url:'ncsound/sounds/lindsey.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
 	{
 		name:'bumblebee',
-		url:'sounds/bumblebee.mp3',
+		url:'ncsound/sounds/bumblebee.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
 	{
 		name:'summer',
-		url:'sounds/summer.mp3',
+		url:'ncsound/sounds/summer.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
 	{
 		name:'winter',
-		url:'sounds/winter.mp3',
+		url:'ncsound/sounds/winter.mp3',
 		buffer:null,
 		isBufferLoaded:false
 	},
@@ -175,32 +175,34 @@ NCSOUND.startMikeStream = function(){
 
 /* 
  * Starts analyzing the current source and calls NGSOUND.log()
+ * @param {Object} ARTGENinstance
  */
-NCSOUND.startFeedbackStream = function(){
-
+NCSOUND.startFeedbackStream = function(ARTGENinstance){
+	console.log(ARTGENinstance);
 	this.analyser.fftSize = 256;
     var bufferLength = this.analyser.frequencyBinCount;
 	console.log("We are accessing the data related to "+bufferLength+" different frequencies.");
     this.dataArray = new Float32Array(bufferLength);
 	
 	// Start the loop
-    this.log();
+    this.log(ARTGENinstance);
 }
 
 /* 
  * Calls streamShape(...) to filter raw sound data and then draw(...). Will be replaced by an ARTGEN recieving method.
+ * @param {Object} ARTGENinstance
  */
-NCSOUND.log = function(){
+NCSOUND.log = function(ARTGENinstance){
 	var self = this;
 	// So that this returns NCSOUND and not window at each recursive call
-	this.animFrame = requestAnimationFrame(function(){self.log();});
+	this.animFrame = requestAnimationFrame(function(){self.log(ARTGENinstance);});
 	// This analyser method provides the actual data stream
 	// It fills dataArray with our frequency data
 	var dataArray = this.dataArray;
 	this.analyser.getFloatFrequencyData(dataArray);
 	
-	if(++this.protec == 5){
-		this.draw(this.streamShape(dataArray,2));
+	if(++this.protec == 10){
+		this.draw(ARTGENinstance,this.streamShape(dataArray,3));
 		this.protec = 0;
 	}
 }
@@ -212,7 +214,7 @@ NCSOUND.log = function(){
  * @returns {Array} Relevant data stream for ARTGEN
  */
 NCSOUND.streamShape = function(freqData,id){
-	console.log(freqData);
+
 	var dataStream = [];;
 	if (id == 1){
 		// Input stream:
@@ -273,6 +275,10 @@ NCSOUND.streamShape = function(freqData,id){
 			dataStream.push(freqData[key]+150);
 		}
 	}
+	else if (id == 3){
+		dataStream = [freqData[0]];
+	}
+	
 	return dataStream;
 }
 
@@ -324,9 +330,10 @@ NCSOUND.killDOMview = function(id){
  * Assigns and removes classes in the DOM for red bar highlight
  * @param {Array} dataStream Relevant data stream for ARTGEN
  */
-NCSOUND.draw = function(dataStream){
-
-	console.log(dataStream);
+NCSOUND.draw = function(ARTGENinstance,dataStream){
+	
+	//console.log(dataStream);
+	
 	// Simplistic implementation with DOM elements
 	// This method should bind the back-end and front-end part of our project
 	/*
@@ -337,10 +344,15 @@ NCSOUND.draw = function(dataStream){
 	jQuery('#domview1 .bar:nth-of-type('+dataStream[1]+')').addClass('focus2');
 	jQuery('#domview1 .bar:nth-of-type('+dataStream[2]+')').addClass('focus3');
 	*/
+	/*
 	var bars = jQuery('#domview2 .bar').each(function(index){
 		jQuery(this).css('margin-bottom',3*dataStream[index]);
 	});
 	// Comes with a CSS which I will upload soon.
+	*/
+	
+	ARTGENinstance.data = 1+dataStream[0]/100;
+	console.log(1+dataStream[0]/100);
 }
 
 /** On start **/
@@ -372,6 +384,6 @@ jQuery(document).ready(function(){
 	/*
 	NCSOUND.DOMview(2);
 	NCSOUND.playSound(3);
-	NCSOUND.startFeedbackStream();
+	NCSOUND.startFeedbackStream(leo);
 	*/
 });
