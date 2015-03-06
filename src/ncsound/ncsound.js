@@ -28,10 +28,15 @@ NCSOUND.lastMaxDB = -100;
 NCSOUND.silenceDelay = 250;// In ms
 NCSOUND.lastSpokenTimestamp = null;
 
+//for StreamShape i=6
 NCSOUND.previousFrequency= null;
 NCSOUND.gainDifference = 10;
 NCSOUND.gainLevels = 4;
 NCSOUND.freqGain=24; // the range of frequencies taken to only cover the freq range of voice (24 out of 128 with a fft of 256)
+
+//for StreamShape i=7
+NCSOUND.previousAverage=0;
+
 
 // Stores urls to audio files and buffers once loaded with loadSound()
 NCSOUND.soundBank = [
@@ -235,7 +240,7 @@ NCSOUND.log = function(ARTGENinstance){
 	this.analyser.getFloatFrequencyData(dataArray);
 	
 	if(++this.protec == 10){
-		this.draw(ARTGENinstance,this.streamShape(dataArray,6));
+		this.draw(ARTGENinstance,this.streamShape(dataArray,7));
 		this.protec = 0;
 	}
 }
@@ -352,7 +357,7 @@ NCSOUND.streamShape = function(freqData,id){
 
 	}
 	else if (id == 6){
-		// Detect the change in frequency in relation to the last reading
+		// Detect the change in gain in relation to the last reading (the maximum gain from one frequency among the range of voice)
 		var previousFreqs = this.previousFrequency;
 		if (previousFreqs==null){
 				previousFreqs = new Float32Array(this.analyser.frequencyBinCount);
@@ -414,8 +419,40 @@ NCSOUND.streamShape = function(freqData,id){
 
 		this.previousFrequency=previousFreqs;
 		dataStream.push(result);	
-	}
+	}	else if (id == 7){
+		// Detect the average change in gain in relation to the last reading
 
+		var avgVariation=0;
+
+		for (key = 0; key < this.freqGain; key++){
+				avgVariation+=freqData[key];
+			}
+
+		var gain=this.gainDifference;
+		var levels=this.gainLevels;
+
+		avgVariation=avgVariation/this.analyser.frequencyBinCount;
+		
+		if(this.previousAverage==0){
+			result=0;
+		}else{
+			result=(avgVariation/this.previousAverage)-1;	
+		}
+
+
+		if(result< -0.1){
+			result= 1;
+		}else if (result<0.1){
+			result= 0;
+		}else{
+			result = -1;
+		}
+
+		console.log(result);
+	
+		this.previousAverage=avgVariation;
+		dataStream.push(result);	
+	}
 	return dataStream;
 }
 
