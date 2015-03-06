@@ -28,6 +28,11 @@ NCSOUND.lastMaxDB = -100;
 NCSOUND.silenceDelay = 250;// In ms
 NCSOUND.lastSpokenTimestamp = null;
 
+NCSOUND.previousFrequency= null;
+NCSOUND.gainDifference = 10;
+NCSOUND.gainLevels = 4;
+NCSOUND.freqGain=24; // the range of frequencies taken to only cover the freq range of voice (24 out of 128 with a fft of 256)
+
 // Stores urls to audio files and buffers once loaded with loadSound()
 NCSOUND.soundBank = [
 	{
@@ -230,7 +235,7 @@ NCSOUND.log = function(ARTGENinstance){
 	this.analyser.getFloatFrequencyData(dataArray);
 	
 	if(++this.protec == 10){
-		this.draw(ARTGENinstance,this.streamShape(dataArray,4));
+		this.draw(ARTGENinstance,this.streamShape(dataArray,6));
 		this.protec = 0;
 	}
 }
@@ -314,6 +319,7 @@ NCSOUND.streamShape = function(freqData,id){
 		for (key in freqData){
 			if(freqData[key] > this.freqNoiseLevel){
 				isSilent = false;
+				console.log(freqData[key]);
 			}
 		}
 		// Speaking!
@@ -332,6 +338,7 @@ NCSOUND.streamShape = function(freqData,id){
 				dataStream.push(1);
 			}
 		}
+
 	}
 	else if (id == 5){
 		// From raw freq data to sound level increasing or decreasing (compared max value among freq between 2 timeframes)
@@ -342,7 +349,73 @@ NCSOUND.streamShape = function(freqData,id){
 			}
 		}
 		dataStream.push(this.lastMaxDB);
+
 	}
+	else if (id == 6){
+		// Detect the change in frequency in relation to the last reading
+		var previousFreqs = this.previousFrequency;
+		if (previousFreqs==null){
+				previousFreqs = new Float32Array(this.analyser.frequencyBinCount);
+				for (key in previousFreqs){
+					previousFreqs[key] = freqData[key];
+				}
+		}
+
+		var maxVariation=0;
+		var keyRefMax=0;
+		var keyRefMin=0;
+		var minVariation=0;
+		var maxFreq=0;
+		var maxFreqValue=-200;
+
+		for (key = 0; key < this.freqGain; key++){
+
+			    var dif = freqData[key]- previousFreqs[key];
+				if (dif>maxVariation){
+					maxVariation=dif;
+					keyRefMax=key;
+				}else if (dif<minVariation){
+					minVariation=dif;
+					keyRefMin=key;
+				}
+				previousFreqs[key] = freqData[key];	
+
+				if (freqData[key] > maxFreqValue){
+					maxFreq=key;
+					maxFreqValue=freqData[key];
+				}			
+			console.log(freqData[key]);
+		}
+		//console.log(maxVariation);
+		//console.log(keyRefMax);
+		//console.log(maxFreq);
+
+		var gain=this.gainDifference;
+		var levels=this.gainLevels;
+		
+
+		if (maxVariation-minVariation>0){
+			var normGain= (maxVariation/gain)/levels;
+			if(normGain<0.25){
+				var result= 0.5;
+			}else if (normGain<0.5){
+				var result= 0;
+			}else if (normGain<0.75){
+				var result= -0.5;
+			}else{
+				var result= -1;
+			}			
+		}else{
+			var result=1;
+		}
+
+		console.log(result);
+	
+
+		this.previousFrequency=previousFreqs;
+		dataStream.push(result);	
+	}
+
 	return dataStream;
 }
 
@@ -422,9 +495,10 @@ NCSOUND.draw = function(ARTGENinstance,dataStream){
 	console.log(inRange);
 	*/
 	// Stream type 4
-	console.log(dataStream[0]);
+	
+	//console.log(dataStream[0]);
 	ARTGENinstance.data = dataStream[0];
-	(dataStream[0] == 1 ? jQuery('body').css('background','white') : jQuery('body').css('background','black'));
+	//(dataStream[0] == 1 ? jQuery('body').css('background','white') : jQuery('body').css('background','black'));
 	/*
 	// Stream type 5
 	var inRange = Math.min(Math.max(1+dataStream[0]/100,0),1);
