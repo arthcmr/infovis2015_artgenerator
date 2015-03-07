@@ -1,83 +1,97 @@
-var canvas = document.getElementById("visualization");
-var ctx = canvas.getContext("2d");
+ARTGEN.addBrush('splash', {
 
-var particles = [];
+    init: function(c){
 
-canvas.onmousedown = function(e)
-{
-    for (var i = 0; i < getRandomInt(30, 100); i++)
-    {
-        particles.push({
-            x: e.clientX,
-            y: e.clientY,
-            angle: i * 5,
-            size: 5 + Math.random() * 3,
-            life: 200 + Math.random() * 50
-        });
-    }
-}
+        //context
+        this.ctx = c;
+        //include enable/disable method
+        this._enabled = false;
 
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+        //general settings
+        this._settings = _.extend({
+            COLOR: "rgba(52, 152, 219,0.1)",
+        }, (this._settings || {}) );
 
-var delta = 0;
-var last = Date.now();
+        this.particles = [];
 
-function animate()
-{
-    delta = Date.now() - last;
-    last = Date.now();
-    for (var i = 0; i < particles.length; i++)
-    {
-        var p = particles[i];
-        p.x += Math.cos(p.angle) * 4 + Math.random() * 2 - Math.random() * 2;
-        p.y += Math.sin(p.angle) * 4 + Math.random() * 2 - Math.random() * 2;
-        p.life -= delta;
-        p.size -= delta / 50;
+        this.delta = 0;
+        this.last = Date.now();
+
+        //Positions
+        this.positionX;
+        this.positionY;
+    },
+
+    start: function(x, y){
+        this.positionX = x;
+        this.positionY = y;
+    },
+
+    setTarget: function(x, y){
+        this.positionX = x;
+        this.positionY = y;
+    },
+
+    enable: function() {
+        this._enabled = true;
+        this._settings.COLOR = this.color;
+    },
+    disble: function() {
+        this._enabled = true;
+        this._settings.COLOR = this.color;
+    },
+    setColor: function(color) {
+        this.color = color;
+        if (this._enabled) this._settings.COLOR = color;
+    },
+    update: function(){
+       for (var i = 0; i < _.random(30,100); i++){
+            this.particles.push({
+                x: this.positionX,
+                y: this.positionY,
+                angle: i * 5,
+                size: 5 + Math.random() * 3,
+                life: 200 + Math.random() * 50
+            });
+        }
+       
+        this.delta = Date.now() - this.last;
+        this.last = Date.now();
+        for (var i = 0; i < this.particles.length; i++)
+        {
+            var p = this.particles[i];
+            p.x += Math.cos(p.angle) * 4 + Math.random() * 2 - Math.random() * 2;
+            p.y += Math.sin(p.angle) * 4 + Math.random() * 2 - Math.random() * 2;
+            p.life -= this.delta;
+            p.size -= this.delta / 50;
+            
+            if (p.size <= 0)
+            {
+                p.life = 0;
+            }
+            
+            if (p.life <= 0)
+            {
+                this.particles.splice(i--, 1);
+                continue;
+            }
+        }
+    },
+
+    draw: function(){
+        this.ctx.fillStyle = this._settings.COLOR;    
         
-        if (p.size <= 0)
+        for (var i = 0; i < this.particles.length; i++)
         {
-            p.life = 0;
+            if (Math.random() < 0.1)
+            {
+                continue;
+            }
+            var p = this.particles[i];
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2, false);
+            this.ctx.fill();
         }
-        
-        if (p.life <= 0)
-        {
-            particles.splice(i--, 1);
-            continue;
-        }
-    }
-}
+    },
 
-function render()
-{
-    ctx.fillStyle = "#3498db";    
-    //ctx.globalAlpha = 0.1;
-    
-    for (var i = 0; i < particles.length; i++)
-    {
-        if (Math.random() < 0.1)
-        {
-            continue;
-        }
-        var p = particles[i];
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2, false);
-        ctx.fill();
-    }
-}
-
-window.requestAnimFrame = (function(){
-    return  window.requestAnimationFrame       ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame    ||
-        function( callback ){
-            window.setTimeout(callback, 1000 / 60);
-        };
-})();
-
-(function animloop(){
-    requestAnimFrame(animloop);
-    animate();
-    render();
-})();
+});
