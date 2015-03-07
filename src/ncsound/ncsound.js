@@ -40,7 +40,7 @@ NCSOUND.previousAverage = 0;
 NCSOUND.soundBank = {};
 
 NCSOUND.log = function(msg) {
-    console.log(msg);
+    //console.log(msg);
 }
 
 /* 

@@ -53,7 +53,7 @@ ARTGEN.init = function(canvas_id, painter) {
     var p = this._painters.get(painter);
     instance.painter = new p();
     instance.painter.init(instance._canvas, instance._ctx);
-    instance.data = 0;
+    instance.data = null;
 
     //browser animation
     requestAnimFrame = (function() {
