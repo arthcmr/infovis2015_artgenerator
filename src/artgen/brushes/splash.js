@@ -37,13 +37,15 @@ ARTGEN.addBrush('splash', {
         this._settings.COLOR = this.color;
     },
     disble: function() {
-        this._enabled = true;
-        this._settings.COLOR = this.color;
+        this._enabled = false;
+        this._settings.COLOR = "rgba(52, 152, 219, 0)" ;
     },
+
     setColor: function(color) {
         this.color = color;
         if (this._enabled) this._settings.COLOR = color;
     },
+
     update: function(){
        for (var i = 0; i < _.random(30,100); i++){
             this.particles.push({
