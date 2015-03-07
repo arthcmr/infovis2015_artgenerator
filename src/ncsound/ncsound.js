@@ -29,13 +29,13 @@ NCSOUND.silenceDelay = 250;// In ms
 NCSOUND.lastSpokenTimestamp = null;
 
 //for StreamShape i=6
-NCSOUND.previousFrequency= null;
+NCSOUND.previousFrequency = null;
 NCSOUND.gainDifference = 10;
 NCSOUND.gainLevels = 4;
-NCSOUND.freqGain=24; // the range of frequencies taken to only cover the freq range of voice (24 out of 128 with a fft of 256)
+NCSOUND.freqGain = 24; // the range of frequencies taken to only cover the freq range of voice (24 out of 128 with a fft of 256)
 
 //for StreamShape i=7
-NCSOUND.previousAverage=0;
+NCSOUND.previousAverage = 0;
 
 
 // Stores urls to audio files and buffers once loaded with loadSound()
@@ -316,6 +316,7 @@ NCSOUND.streamShape = function(freqData,id){
 	else if (id == 3){
 		// Amplitude of lowest pitch frequency
 		dataStream = [freqData[0]];
+		console.log(freqData[0]);
 	}
 	else if (id == 4){
 		// From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
@@ -359,35 +360,36 @@ NCSOUND.streamShape = function(freqData,id){
 	else if (id == 6){
 		// Detect the change in gain in relation to the last reading (the maximum gain from one frequency among the range of voice)
 		var previousFreqs = this.previousFrequency;
-		if (previousFreqs==null){
+		if (previousFreqs == null){
 				previousFreqs = new Float32Array(this.analyser.frequencyBinCount);
 				for (key in previousFreqs){
 					previousFreqs[key] = freqData[key];
 				}
 		}
 
-		var maxVariation=0;
-		var keyRefMax=0;
-		var keyRefMin=0;
-		var minVariation=0;
-		var maxFreq=0;
-		var maxFreqValue=-200;
+		var maxVariation = 0;
+		var keyRefMax = 0;
+		var keyRefMin = 0;
+		var minVariation = 0;
+		var maxFreq = 0;
+		var maxFreqValue = -200;
 
 		for (key = 0; key < this.freqGain; key++){
 
-			    var dif = freqData[key]- previousFreqs[key];
-				if (dif>maxVariation){
-					maxVariation=dif;
-					keyRefMax=key;
-				}else if (dif<minVariation){
-					minVariation=dif;
-					keyRefMin=key;
+			    var dif = freqData[key] - previousFreqs[key];
+				if (dif > maxVariation){
+					maxVariation = dif;
+					keyRefMax = key;
+				}
+				else if (dif < minVariation){
+					minVariation = dif;
+					keyRefMin = key;
 				}
 				previousFreqs[key] = freqData[key];	
 
 				if (freqData[key] > maxFreqValue){
-					maxFreq=key;
-					maxFreqValue=freqData[key];
+					maxFreq = key;
+					maxFreqValue = freqData[key];
 				}			
 			console.log(freqData[key]);
 		}
@@ -395,8 +397,8 @@ NCSOUND.streamShape = function(freqData,id){
 		//console.log(keyRefMax);
 		//console.log(maxFreq);
 
-		var gain=this.gainDifference;
-		var levels=this.gainLevels;
+		var gain = this.gainDifference;
+		var levels = this.gainLevels;
 		
 
 		if (maxVariation-minVariation>0){

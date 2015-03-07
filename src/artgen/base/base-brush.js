@@ -34,3 +34,41 @@ baseBrush.prototype.stop = function() {
 baseBrush.prototype.setColor = function(color) {
     this.color = color;
 };
+
+/*
+ * set target for brushes extending flock
+ */
+baseBrush.prototype.setTarget = function(x, y) {
+	this._settings.TARGET_POSITION = new Vector(x, y);
+};
+
+/*
+ * draw with a transparent color
+ */
+baseBrush.prototype.disable = function() {
+	this._enabled = false;
+	this._settings.COLOR = "rgba(255,255,255,0)";
+};
+
+/*
+ * set brush color
+ */
+baseBrush.prototype.setColor = function(color) {
+	this.color = color;
+	if (this._enabled) this._settings.COLOR = color;
+};
+
+/*
+ * Stop drawing transparency
+ */
+baseBrush.prototype.enable = function() {
+	this._enabled = true;
+	this._settings.COLOR = this.color;
+};
+
+/*
+ * Override required
+ */
+baseBrush.prototype.setPosition = function(x, y) {
+	// Nothing
+};
