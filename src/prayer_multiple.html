@@ -31,24 +31,15 @@
         leo.stop();
         leo.paint();
     }
-	
-	setTimeout(function(){
-		//NCSOUND.startMikeStream();
-		NCSOUND.playSound(5);
-	},500);
-	
-	setTimeout(function(){
-       NCSOUND.startFeedbackStream(leo);    
-       resizeCanvas();
-	},1000);
-	
-	/*
-    leo.data = Math.random();
-    setInterval(function() {
-        leo.data = Math.random();
-    }, 500);
-	*/
-    // theo.paint();
+
+    NCSOUND.playSound('ncsound/sounds/weather.mp3', function() {
+        console.log("Starting...");
+        resizeCanvas();
+        setInterval(function() {
+            data = NCSOUND.getData();
+            leo.data = data;
+        }, 25);
+    });
     </script>
 </body>
 
