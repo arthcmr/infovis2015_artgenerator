@@ -19,7 +19,7 @@
     <script type="text/javascript">
     //make canvas full screen
 
-    var leo = ARTGEN.init("visualization", "gogh");
+    var leo = ARTGEN.init("visualization", "pollock");
 
     var canvas = document.getElementById('visualization');
     // resize the canvas to fill browser window dynamically
@@ -33,14 +33,20 @@
     }
 	
 	setTimeout(function(){
-		//NCSOUND.startMikeStream();
-		NCSOUND.playSound(8);
+		NCSOUND.playSound('ncsound/sounds/weather.mp3', function() {
+        console.log("Starting...");
+        resizeCanvas();
+        setInterval(function() {
+            data = NCSOUND.getData();
+            leo.data = data;
+        }, 25);
+    });
 	},500);
 	
-	setTimeout(function(){
+	/*setTimeout(function(){
        NCSOUND.startFeedbackStream(leo);    
        resizeCanvas();
-	},1000);
+	},1000);*/
 	
 	/*
     leo.data = Math.random();

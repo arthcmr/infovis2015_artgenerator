@@ -1,6 +1,6 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('gogh', {
-	brushes: ['flock'],
+	brushes: ['circles'],
     paint: function(time, data) {
 
     	if(!this._instantiated) {

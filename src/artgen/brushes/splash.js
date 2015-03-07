@@ -50,7 +50,7 @@ ARTGEN.addBrush('splash', {
        for (var i = 0; i < _.random(30,100); i++){
             this.particles.push({
                 x: this.positionX,
-                y: this.positionY,
+                y: this.positionY + margin,
                 angle: i * 5,
                 size: 5 + Math.random() * 3,
                 life: 200 + Math.random() * 50
