@@ -19,27 +19,28 @@
     <script type="text/javascript">
     //make canvas full screen
 
-    var leo = ARTGEN.init("visualization", "circle");
+    var highGuy = ARTGEN.init("visualization", "ondrugs");
 
     var canvas = document.getElementById('visualization');
     // resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
 
     function resizeCanvas() {
-        leo._canvas.width = window.innerWidth;
-        leo._canvas.height = window.innerHeight;
-        leo.stop();
-        leo.paint();
+        highGuy._canvas.width = window.innerWidth;
+        highGuy._canvas.height = window.innerHeight;
+        highGuy.stop();
+        highGuy.paint();
     }
-
-    NCSOUND.playSound('ncsound/sounds/weather.mp3', function() {
+	
+	NCSOUND.startMikeStream(function() {
         console.log("Starting...");
         resizeCanvas();
         setInterval(function() {
-            data = NCSOUND.getData(7)[0];
-            leo.data = data;
+            data = NCSOUND.getData(4)[0];
+            highGuy.data = data;
         }, 25);
     });
+	
     </script>
 </body>
 

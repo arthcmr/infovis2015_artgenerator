@@ -182,13 +182,13 @@ NCSOUND.startMikeStream = function(callback) {
 /* 
  * Back-end main filtering function. Provides relevant analyzed data to ARTGEN
  * @param {Array} freqData Raw frequency data
- * @param {Number} id Id that detemines which stream processing to run
+ * @param {Number} channel Id that detemines which stream processing to run
  * @returns {Array} Relevant data stream for ARTGEN
  */
-NCSOUND.streamShape = function(freqData, id) {
+NCSOUND.streamShape = function(freqData, channel) {
 
     var dataStream = [];
-    if (id == 1) {
+    if (channel == 1) {
         // Input stream:
         // Raw frequency data
         // Output stream:
@@ -236,7 +236,7 @@ NCSOUND.streamShape = function(freqData, id) {
         //console.log("60th value:",freqData[59]/128);
         //console.log("100th value:",freqData[99]/128);
         //console.log("among "+freqData.length+" values.");
-    } else if (id == 2) {
+    } else if (channel == 2) {
         // Input stream:
         // Raw frequency data
         // Output stream:
@@ -245,11 +245,11 @@ NCSOUND.streamShape = function(freqData, id) {
         for (key in freqData) {
             dataStream.push(freqData[key] + 150);
         }
-    } else if (id == 3) {
+    } else if (channel == 3) {
         // Amplitude of lowest pitch frequency
         dataStream = [freqData[0]];
         this.log(freqData[0]);
-    } else if (id == 4) {
+    } else if (channel == 4) {
         // From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
         // Takes NCSOUND.lastSpokenTimestamp into account
         var isSilent = true;
@@ -275,7 +275,7 @@ NCSOUND.streamShape = function(freqData, id) {
             }
         }
 
-    } else if (id == 5) {
+    } else if (channel == 5) {
         // From raw freq data to sound level increasing or decreasing (compared max value among freq between 2 timeframes)
         this.lastMaxDB = -100;
         for (key in freqData) {
@@ -285,7 +285,7 @@ NCSOUND.streamShape = function(freqData, id) {
         }
         dataStream.push(this.lastMaxDB);
 
-    } else if (id == 6) {
+    } else if (channel == 6) {
         // Detect the change in gain in relation to the last reading (the maximum gain from one frequency among the range of voice)
         var previousFreqs = this.previousFrequency;
         if (previousFreqs == null) {
@@ -348,7 +348,7 @@ NCSOUND.streamShape = function(freqData, id) {
 
         this.previousFrequency = previousFreqs;
         dataStream.push(result);
-    } else if (id == 7) {
+    } else if (channel == 7) {
         // Detect the average change in gain in relation to the last reading
 
         var avgVariation = 0;
@@ -387,9 +387,10 @@ NCSOUND.streamShape = function(freqData, id) {
 
 /* 
  * Gets data from NC Sounds
+ * @param {Number} channel Id of the audio channel used by painters
  * @returns {Array} Relevant data stream
  */
-NCSOUND.getData = function() {
+NCSOUND.getData = function(channel) {
 
     this.analyser.fftSize = 256;
 
@@ -398,7 +399,7 @@ NCSOUND.getData = function() {
 
     this.dataArray = new Float32Array(bufferLength);
     this.analyser.getFloatFrequencyData(this.dataArray);
-    return this.streamShape(this.dataArray, 7)[0];
+    return this.streamShape(this.dataArray, channel);
 }
 
 NCSOUND.initAudioContext();
