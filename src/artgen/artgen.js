@@ -8,6 +8,11 @@ ARTGEN._brushes = new Collection(baseBrush);
 //starts the collection of painters
 ARTGEN._painters = new Collection(basePainter);
 
+//logs messages
+ARTGEN.log = function(msg) {
+    //console.log(msg);
+}
+
 /* 
  * adds a new brush to the collection
  * Alias for ARTGEN.brushes.add
@@ -34,7 +39,7 @@ ARTGEN.addPainter = function(name, extend, method) {
  * starts the art generator
  */
 ARTGEN.init = function(canvas_id, painter) {
-    console.log("Starting ARTGEN on", canvas_id);
+    this.log("Starting ARTGEN on", canvas_id);
 
     var instance = {};
     //set up the canvas
