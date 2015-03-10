@@ -58,7 +58,7 @@ ARTGEN.addBrush('thin_marker', {
 
     draw: function(){
         this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-  
+        this.ctx.strokeStyle = this.color;
         this.p1 = this.points[0];
         this.p2 = this.points[1];
         this.ctx.lineWidth=5;
