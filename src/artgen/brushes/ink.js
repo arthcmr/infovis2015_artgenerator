@@ -1,62 +1,39 @@
 ARTGEN.addBrush('ink', {
-    init: function() {
-        //initial values
-        this.minspeed = 0.1;
-        this.maxspeed = 2; // too large and you'll get loose dots
-        //acceleration and change of speed
-        this.v = {
-            x: 0,
-            y: 0
-        };
-        this.radius = 1;
-        this.stability = .002; // increase to make paths straighter
-        this.innerForce = {
-            x: 0,
-            y: 0
-        };
+
+    _settings: {
+        COLOR: "rgba(255,255,255,0)"
     },
-    update: function(canvas, data) {
 
-        function limit(v, min, max) {
-            var norm = Math.sqrt(v.x * v.x + v.y * v.y);
-            if (norm > max) {
-                v.x *= max / norm;
-                v.y *= max / norm;
-            } else if (norm < min && min != 0) {
-                v.x /= norm / min;
-                v.y /= norm / min;
-            }
-        }
+    init: function(c) {
 
-        this.innerForce.x += ((1 - 0.5) / this.stability);
-        this.innerForce.y += data / this.stability ; //0 //((1 - 0.5) / this.stability);
-        limit(this.innerForce, 0, 100);
+        this.ctx = c;
+        this.ctx.lineJoin = this.ctx.lineCap = 'round';
 
-        this.v.x += (this.innerForce.x / this.mass);
-        this.v.y += (this.innerForce.y / this.mass);
-        limit(this.v, this.minspeed, this.maxspeed);
-        this.x += this.v.x;
-        this.y += this.v.y;
-
-        //keep the dot within the canvas
-        if (this.x > canvas.width) this.x -= canvas.width;
-        if (this.y > canvas.height) this.y -= canvas.height;
-        if (this.x < 0) this.x += canvas.width;
-        if (this.y < 0) this.y += canvas.height;
     },
-    draw: function(ctx) {
-        ctx.save()
-        ctx.translate(this.x, this.y);
-        var norm = Math.sqrt(this.v.x * this.v.x + this.v.y * this.v.y);
-        ctx.beginPath();
-        ctx.arc(0, 0, this.radius / norm, 0, Math.PI * 2, true);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.restore();
+    update: function() {
+
+
+    },
+    draw: function() {
+
+        this.ctx.beginPath();
+        var x1 = this._prevPOS.x;
+        var y1 = this._prevPOS.y;
+        var x2 = this._settings.TARGET_POSITION.x;
+        var y2 = this._settings.TARGET_POSITION.y;
+        this.ctx.moveTo(x1, y1);
+        this.ctx.lineWidth = _.random(3,6);
+        this.ctx.strokeStyle = this._settings.COLOR;
+        this.ctx.lineTo(x2, y2);
+        this.ctx.stroke();
+
+    },
+    setTarget: function(x, y) {
+        this._prevPOS = this._settings.TARGET_POSITION;
+        this._settings.TARGET_POSITION = new Vector(x, y);
     },
     start: function(x, y, m) {
-        this.x = x;
-        this.y = y;
-        this.mass = m; // Force/mass gives acceleration
+        this.setTarget(x, y);
+        this._prevPOS = this._settings.TARGET_POSITION;
     }
 });

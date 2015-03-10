@@ -27,6 +27,7 @@ ARTGEN.addBrush('flock', {
             BOID_STYLE: 2,
             DRAW_TRAILS: false,
             LINE_WIDTH: 1,
+            WRAP_CANVAS: false
         }, (this._settings || {}) );
 
         this.boids = [];
@@ -91,10 +92,12 @@ ARTGEN.addBrush('flock', {
         };
 
         Boid.prototype.wrapToCanvasBounds = function() {
-            this.loc.x = this.loc.x < 0 ? this.ctx.canvas.width : this.loc.x;
-            this.loc.x = this.loc.x > this.ctx.canvas.width ? 0 : this.loc.x;
-            this.loc.y = this.loc.y < 0 ? this.ctx.canvas.height : this.loc.y;
-            this.loc.y = this.loc.y > this.ctx.canvas.height ? 0 : this.loc.y;
+            if(settings.WRAP_CANVAS) {
+                this.loc.x = this.loc.x < 0 ? this.ctx.canvas.width : this.loc.x;
+                this.loc.x = this.loc.x > this.ctx.canvas.width ? 0 : this.loc.x;
+                this.loc.y = this.loc.y < 0 ? this.ctx.canvas.height : this.loc.y;
+                this.loc.y = this.loc.y > this.ctx.canvas.height ? 0 : this.loc.y;
+            }
         };
 
         Boid.prototype.flock = function(neighbors) {

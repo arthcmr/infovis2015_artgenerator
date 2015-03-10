@@ -1,18 +1,12 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
-    brushes: ['marker' /*, 'flock', 'hairy'*/ ],
+    brushes: ['ink', 'ink' /*, 'flock', 'hairy'*/ ],
     paint: function(time, data) {
 
         if (!this._instantiated) {
             this.first_time = time;
             this.brushes = _.shuffle(this.brushes);
-            this.posX = [];
-            this.posY = [];
-            for (var i = 0; i < this.brushes.length; i++) {
-                this.brushes[i]._settings.BOIDS = _.random(20, 50);
-            };
         }
-
 
         var flocks = [];
         for (var i = 0; i < this.brushes.length; i++) {
@@ -34,8 +28,11 @@ ARTGEN.addPainter('circle', {
 
         var time_variance = (time - this.first_time) / 1000;
 
-        var target_x = (Math.cos(time_variance % (2 * Math.PI)) * max_height) + center_x,
-            target_y = (Math.sin(time_variance % (2 * Math.PI)) * max_height) + center_y;
+        var target_x = (Math.cos(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_x,
+            target_y = (Math.sin(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_y;
+
+        var target_x2 = (Math.cos(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_x,
+            target_y2 = (Math.sin(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_y;
 
         if (!this._instantiated) {
             this.color = "#FFFFFF";
@@ -45,33 +42,35 @@ ARTGEN.addPainter('circle', {
             this.ctx.fill();
 
             //choose a random dark color
-            var colorLight = [
-                [89, 3, 3],
-                [220, 220, 220]
-            ];
-            var colorDark = [
-                [209, 13, 13],
-                [35, 35, 35]
-            ];
-            this.colorLight1 = 'rgba(' + colorLight[0].join(',') + ',0.1)';
-            this.colorLight2 = 'rgba(' + colorLight[1].join(',') + ',0.1)';
-            this.colorDark1 = 'rgba(' + colorDark[0].join(',') + ',0.1)';
-            this.colorDark2 = 'rgba(' + colorDark[1].join(',') + ',0.1)';
+            var color1 = randomColor({
+                hue: 'blue',
+                format: 'rgbArray'
+            });
+            var color2 = randomColor({
+                hue: 'red',
+                format: 'rgbArray'
+            });
+            this.colors = ['rgba(' + color1.join(',') + ',0.1)', 'rgba(' + color2.join(',') + ',0.1)'];
 
             //initial positions and colors based on silence
             for (var i = 0; i < flocks.length; i++) {
-                flocks[i].setColor(this.colorLight1);
-                flocks[i].start(target_x, target_y);
+                flocks[i].setColor(this.colors[i]);
+                if (i === 1) {
+                    flocks[i].start(target_x2, target_y2);
+
+                } else {
+                    flocks[i].start(target_x, target_y);
+                }
                 flocks[i].enable();
             };
 
             this._instantiated = true;
         }
 
-        for (var i = 0; i < flocks.length; i++) {
-            var color = (data) ? this.colorDark1 : this.colorLight1;
-            flocks[i].setColor(color);
-        }
+        // for (var i = 0; i < flocks.length; i++) {
+        //     var color = (data) ? this.colorDark1 : this.colorLight1;
+        //     flocks[i].setColor(color);
+        // }
 
         // this.color = "rgba(255,255,255,0.1)";
         // this.ctx.beginPath();
@@ -82,7 +81,13 @@ ARTGEN.addPainter('circle', {
         // target_x2 -= (!data * max_width);
 
         for (var i = 0; i < flocks.length; i++) {
-            flocks[i].setTarget(target_x, target_y);
+            if (i === 1) {
+                flocks[i].setTarget(target_x2, target_y2);
+
+            } else {
+                flocks[i].setTarget(target_x, target_y);
+
+            }
             flocks[i].update();
             flocks[i].draw();
         }
