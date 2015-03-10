@@ -256,7 +256,6 @@ NCSOUND.streamShape = function(freqData, channel) {
         for (key in freqData) {
             if (freqData[key] > this.freqNoiseLevel) {
                 isSilent = false;
-                this.log(freqData[key]);
             }
         }
         // Speaking!
@@ -318,7 +317,6 @@ NCSOUND.streamShape = function(freqData, channel) {
                 maxFreq = key;
                 maxFreqValue = freqData[key];
             }
-            this.log(freqData[key]);
         }
         //console.log(maxVariation);
         //console.log(keyRefMax);
@@ -395,7 +393,7 @@ NCSOUND.getData = function(channel) {
     this.analyser.fftSize = 256;
 
     var bufferLength = this.analyser.frequencyBinCount;
-    this.log("We are accessing the data related to " + bufferLength + " different frequencies.");
+    //this.log("We are accessing the data related to " + bufferLength + " different frequencies.");
 
     this.dataArray = new Float32Array(bufferLength);
     this.analyser.getFloatFrequencyData(this.dataArray);

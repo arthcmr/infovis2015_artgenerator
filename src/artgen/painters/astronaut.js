@@ -1,7 +1,6 @@
-ARTGEN.addPainter('ondrugs', {
-	brushes: ['sunburst'],
-	//brushes: ['cannon'],
-	//brushes: ['transient'],
+ARTGEN.addPainter('astronaut', {
+	brushes: ['stellar'],
+	//brushes: ['vortex'],
     paint: function(time, data){
     	var moon = this.getBrush(0);
     	if(!this._instantiated){
