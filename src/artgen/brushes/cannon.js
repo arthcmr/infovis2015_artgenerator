@@ -1,4 +1,4 @@
-ARTGEN.addBrush('mad', {
+ARTGEN.addBrush('cannon', {
     init: function() {
         //initial values
         this.minspeed = 0.1;
