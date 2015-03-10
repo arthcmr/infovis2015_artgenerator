@@ -59,7 +59,7 @@ ARTGEN.addBrush('circles', {
     },
 
     draw: function(){
-        if(Math.abs(this.prevX-this.positionX)>100 || Math.abs(this.prevY-this.positionY)>100){
+        //if(Math.abs(this.prevX-this.positionX)>10 || Math.abs(this.prevY-this.positionY)>10){
 
             this.ctx.lineJoin = this.ctx.lineCap = 'round';
             this.ctx.fillStyle = this.color;
@@ -75,7 +75,7 @@ ARTGEN.addBrush('circles', {
             
             this.prevX = this.positionX;
             this.prevY = this.positionY;
-        }
+        //}
     },
 
 });
