@@ -58,7 +58,7 @@ NCSOUND.getT = function()
 }
 
 NCSOUND.log = function(msg) {
-    console.log(msg);
+    //console.log(msg);
 }
 
 /* 

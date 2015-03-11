@@ -1,6 +1,12 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
-    brushes: ['ink', 'ink' /*, 'flock', 'hairy'*/ ],
+    brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
+
+    _calcPos: function(func, time, data, order, radius, reference) {
+        func = Math[func];
+        return func(time % (2 * Math.PI)) * (radius/3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
+    },
+
     paint: function(time, data) {
 
         if (!this._instantiated) {
@@ -14,7 +20,8 @@ ARTGEN.addPainter('circle', {
         };
 
         var margin, min_x, max_x, min_y, max_y,
-            max_width, max_height, center_x, center_y;
+            max_width, max_height, center_x, center_y,
+            length, zero_x, zero_y;
         //margins improve quality
         margin = 50;
         min_x = margin;
@@ -24,15 +31,26 @@ ARTGEN.addPainter('circle', {
         max_y = this.canvas.height - margin;
         max_height = max_y - min_y;
         center_x = this.canvas.width / 2;
-        center_y = this.canvas.height / 2;
+        center_y = this.canvas.height / 2,
+        length = flocks.length;
 
-        var time_variance = (time - this.first_time) / 1000;
+        var time_var = (time - this.first_time) / 1000;
 
-        var target_x = (Math.cos(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_x,
-            target_y = (Math.sin(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_y;
+        var radius = max_height / 2;
+        zero_x = this._calcPos('cos', time_var, 0, 0, radius, center_x);
+        zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
 
-        var target_x2 = (Math.cos(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_x,
-            target_y2 = (Math.sin(time_variance % (2 * Math.PI)) * (max_height / 2 + (50 - data) * 3)) + center_y;
+        //map brushes to values
+        var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
+
+        var targets = [];
+        for(var i=0; i<length; i++) {
+            var p = new Vector();
+            var d = data[mappings[i]] || 0;
+            p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
+            p.y = this._calcPos('sin', time_var, d, i, radius, center_y);
+            targets.push(p);
+        }
 
         if (!this._instantiated) {
             this.color = "#FFFFFF";
@@ -41,26 +59,20 @@ ARTGEN.addPainter('circle', {
             this.ctx.fillStyle = this.color;
             this.ctx.fill();
 
-            //choose a random dark color
-            var color1 = randomColor({
-                hue: 'blue',
-                format: 'rgbArray'
-            });
-            var color2 = randomColor({
-                hue: 'red',
-                format: 'rgbArray'
-            });
-            this.colors = ['rgba(' + color1.join(',') + ',0.1)', 'rgba(' + color2.join(',') + ',0.1)'];
+            function formatColors(rgbArray) {
+                var c = [];
+                for (var i = 0; i < rgbArray.length; i++) {
+                    c.push("rgba(" + rgbArray[i].join(',') + ",0.1)");
+                };
+                return c;
+            }
+
+            this.colors = formatColors([[6,43,104],[10,21,117],[8,95,127],[8,6,114],[4,71,99]]);
 
             //initial positions and colors based on silence
             for (var i = 0; i < flocks.length; i++) {
                 flocks[i].setColor(this.colors[i]);
-                if (i === 1) {
-                    flocks[i].start(target_x2, target_y2);
-
-                } else {
-                    flocks[i].start(target_x, target_y);
-                }
+                flocks[i].start(targets[i].x, targets[i].y);
                 flocks[i].enable();
             };
 
@@ -72,22 +84,22 @@ ARTGEN.addPainter('circle', {
         //     flocks[i].setColor(color);
         // }
 
-        // this.color = "rgba(255,255,255,0.1)";
-        // this.ctx.beginPath();
-        // this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
-        // this.ctx.fillStyle = this.color;
-        // this.ctx.fill();
+        var color = "rgba(255,255,255,0.001)";
+        this.ctx.beginPath();
+        this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.fillStyle = color;
+        this.ctx.fill();
 
         // target_x2 -= (!data * max_width);
 
         for (var i = 0; i < flocks.length; i++) {
-            if (i === 1) {
-                flocks[i].setTarget(target_x2, target_y2);
-
+            if(targets[i].x === zero_x && targets[i].y === zero_y) {
+                flocks[i].disable();
             } else {
-                flocks[i].setTarget(target_x, target_y);
+                flocks[i].enable();
+            } 
 
-            }
+            flocks[i].setTarget(targets[i].x, targets[i].y);
             flocks[i].update();
             flocks[i].draw();
         }
