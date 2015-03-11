@@ -45,9 +45,7 @@ NCSOUND.minAverage=0;
 //Sound bank
 NCSOUND.soundBank = {};
 
-//<<<<<<< HEAD
 NCSOUND.maxFreqKey=0;
-//=======
 
 NCSOUND.getS = function()
 {
@@ -58,7 +56,6 @@ NCSOUND.getT = function()
 {
     return this.t;
 }
-//>>>>>>> 7787d35f6391cf0f6a84b4d0ecd45219ce37bb28
 
 NCSOUND.log = function(msg) {
     console.log(msg);
