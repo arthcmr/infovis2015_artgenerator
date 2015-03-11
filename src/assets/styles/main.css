@@ -5,3 +5,14 @@ html, body {
 .visualization {
 	display:block;
 }
+
+#endButton {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+}
+#endButton > input {
+	padding: 20px;
+	display: block;
+	margin-top: 20px;
+}

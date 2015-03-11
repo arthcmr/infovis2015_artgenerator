@@ -4,19 +4,72 @@
 <head>
     <meta charset="UTF-8">
     <title>Project</title>
+    <link href="vendor/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="assets/styles/main.css">
 </head>
 
 <body>
     <canvas id="visualization" class="visualization"></canvas>
+    <img id="canvasImg"/>
     <!-- <canvas id="visualization2" class="visualization"></canvas> -->
 
-    <script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
-    <script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
-    <script type="text/javascript" src="artgen/artgen.js"></script>
-    <script type="text/javascript" src="ncsound/ncsound.js"></script>
-    <script type="text/javascript">
+    <button id="endButton" class="btn btn-default" data-toggle="modal" data-target="#myModal">End Drawing</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">End Drawing</h4>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to end drawing ? 
+
+            <hr/>
+
+            <button type="button" id="getValuesButton" class="btn btn-info" onclick="getValues()" data-toggle="modal" data-target="#myModalStatistics">Get Values</button>
+
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModalStatistics" tabindex="-1" role="dialog" aria-labelledby="myModalStatistics" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Statistics</h4>
+    </div>
+    <div class="modal-body">
+        Values
+
+        <hr/>
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary">OK</button>
+    </div>
+</div>
+</div>
+</div>
+
+<script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
+<script type="text/javascript" src="artgen/artgen.js"></script>
+<script type="text/javascript" src="ncsound/ncsound.js"></script>
+<script src="vendor/bootstrap/dist/js/bootstrap.js"></script>
+<script type="text/javascript">
     //make canvas full screen
 
     var highGuy = ARTGEN.init("visualization", "ondrugs");
@@ -31,8 +84,19 @@
         highGuy.stop();
         highGuy.paint();
     }
-	
-	NCSOUND.startMikeStream(function() {
+
+    function getValues(){
+        $(document).ready(function(){
+            $("getValuesButton").click(function(){
+                $("myModal").attr("aria-hidden", "false");
+            });
+        });
+        console.log("S is: " + NCSOUND.getS());
+        console.log("T is: " + NCSOUND.getT());
+    }
+
+
+    NCSOUND.startMikeStream(function() {
         console.log("Starting...");
         resizeCanvas();
         setInterval(function() {
@@ -41,7 +105,7 @@
             highGuy.data = data;
         }, 25);
     });
-	
+
     </script>
 </body>
 
