@@ -36,7 +36,8 @@
         console.log("Starting...");
         resizeCanvas();
         setInterval(function() {
-            data = NCSOUND.getData(4)[0];
+            //data= NCSOUND.getData(4)[0];
+            data= NCSOUND.getData(8);
             highGuy.data = data;
         }, 25);
     });

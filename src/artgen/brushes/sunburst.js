@@ -46,12 +46,15 @@ ARTGEN.addBrush('sunburst', {
 		if (typeof data == "undefined") {
 			return;
 		}
-		if (data == 0) {
+		if (data[0] == 0) {
+		//if (data == 0) {
 			this.silenceCounter++;
-		} else if (data == 1) {
+		} else if (data[0] == 1) {
+		//} else if (data == 1) {
 			this.speakingCounter++;
 		} else {}
 		
+
 		if (this.silenceCounter >= this.silenceCountMax) {
 			this.angAcc--;
 			this.repulsion--;
@@ -76,7 +79,7 @@ ARTGEN.addBrush('sunburst', {
 			this.speakingCounter = 0;
 		}
 		
-		this.simulateExpressiveness();
+		this.simulateExpressiveness(data);
 		this.naturalRepulsionDecrease();
 		//var howMany = Math.floor(Math.random()*(1+1*this.expressiveness));// 1 in ?
 		var howMany = Math.floor(Math.random()*(1+0.08));// 1 in ?
@@ -97,7 +100,7 @@ ARTGEN.addBrush('sunburst', {
 		
 		this.feed(this.generation1);
     },
-	simulateExpressiveness: function() {
+	simulateExpressiveness: function(data) {
 		this.expCounter++;
 		// Full range
 		//this.expressiveness = 0.5 + 0.5*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI);
@@ -109,8 +112,10 @@ ARTGEN.addBrush('sunburst', {
 		//this.expressiveness = 0.8 + 0.2*1/5*Math.floor(5*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI));
 		
 		// Full range with sunburst effect
-		this.expressiveness = 0.5 + 0.5*1/3*Math.floor(3*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI));
 		
+		//this.expressiveness = 0.5 + 0.5*1/3*Math.floor(3*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI));
+		this.expressiveness=parseFloat(data[1]);
+
 	},
 	naturalRepulsionDecrease: function(){
 		this.repulsion -= 1-0.95;

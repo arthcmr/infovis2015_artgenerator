@@ -30,12 +30,16 @@ NCSOUND.lastSpokenTimestamp = null;
 
 //for StreamShape i=6
 NCSOUND.previousFrequency = null;
-NCSOUND.gainDifference = 10;
-NCSOUND.gainLevels = 4;
+//NCSOUND.gainDifference = 10;
+//NCSOUND.gainLevels = 4;
 NCSOUND.freqGain = 24; // the range of frequencies taken to only cover the freq range of voice (24 out of 128 with a fft of 256)
+NCSOUND.absoluteMax=0;
+NCSOUND.absoluteMin=0;
 
 //for StreamShape i=7
 NCSOUND.previousAverage = 0;
+NCSOUND.maxAverage=0;
+NCSOUND.minAverage=0;
 //Sound bank
 NCSOUND.soundBank = {};
 
@@ -187,7 +191,10 @@ NCSOUND.startMikeStream = function(callback) {
  */
 NCSOUND.streamShape = function(freqData, channel) {
 
+    
     var dataStream = [];
+    //var dataStream = [[],[]];
+
     if (channel == 1) {
         // Input stream:
         // Raw frequency data
@@ -268,11 +275,14 @@ NCSOUND.streamShape = function(freqData, channel) {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
                 // Suddenly, silence.
                 dataStream.push(0);
+              
             } else {
                 // The silence is too young.
                 dataStream.push(1);
+              
             }
         }
+
 
     } else if (channel == 5) {
         // From raw freq data to sound level increasing or decreasing (compared max value among freq between 2 timeframes)
@@ -295,38 +305,41 @@ NCSOUND.streamShape = function(freqData, channel) {
         }
 
         var maxVariation = 0;
-        var keyRefMax = 0;
-        var keyRefMin = 0;
-        var minVariation = 0;
-        var maxFreq = 0;
-        var maxFreqValue = -200;
+        var minVariation = 0; 
+      //  var maxFreq = 0;
+      //  var maxFreqValue = -200;
 
         for (key = 0; key < this.freqGain; key++) {
 
             var dif = freqData[key] - previousFreqs[key];
             if (dif > maxVariation) {
                 maxVariation = dif;
-                keyRefMax = key;
+                //keyRefMax = key;
             } else if (dif < minVariation) {
                 minVariation = dif;
-                keyRefMin = key;
+                //keyRefMin = key;
+            }
+
+            if (dif > this.absoluteMax) {
+                this.absoluteMax=dif;
+            } else if (dif < this.absoluteMin) {
+                 this.absoluteMin=dif;
             }
             previousFreqs[key] = freqData[key];
 
-            if (freqData[key] > maxFreqValue) {
+           /* if (freqData[key] > maxFreqValue) {
                 maxFreq = key;
                 maxFreqValue = freqData[key];
-            }
+            }*/
         }
-        //console.log(maxVariation);
-        //console.log(keyRefMax);
-        //console.log(maxFreq);
 
-        var gain = this.gainDifference;
-        var levels = this.gainLevels;
+        //var gain = this.gainDifference;
+        //var levels = this.gainLevels;
+
+        result=(1-(this.absoluteMax-dif)/(this.absoluteMax-this.absoluteMin));
 
 
-        if (maxVariation - minVariation > 0) {
+        /*if (maxVariation - minVariation > 0) {
             var normGain = (maxVariation / gain) / levels;
             if (normGain < 0.25) {
                 var result = 0.5;
@@ -339,10 +352,9 @@ NCSOUND.streamShape = function(freqData, channel) {
             }
         } else {
             var result = 1;
-        }
+        }*/
 
         this.log(result);
-
 
         this.previousFrequency = previousFreqs;
         dataStream.push(result);
@@ -351,34 +363,137 @@ NCSOUND.streamShape = function(freqData, channel) {
 
         var avgVariation = 0;
 
-        for (key = 0; key < this.freqGain; key++) {
-            avgVariation += freqData[key];
+         var previousFreqs = this.previousFrequency;
+        if (previousFreqs == null) {
+            previousFreqs = new Float32Array(this.analyser.frequencyBinCount);
+            for (key in previousFreqs) {
+                previousFreqs[key] = freqData[key];
+            }
         }
 
-        var gain = this.gainDifference;
-        var levels = this.gainLevels;
+        for (key = 0; key < this.freqGain; key++) {
+            avgVariation += (freqData[key]-previousFreqs[key]);
+        }
+
+        //var gain = this.gainDifference;
+        //var levels = this.gainLevels;
 
         avgVariation = avgVariation / this.analyser.frequencyBinCount;
 
         if (this.previousAverage == 0) {
             result = 0;
+            this.maxAverage=avgVariation;
+            this.minAverage=avgVariation;
         } else {
-            result = (avgVariation / this.previousAverage) - 1;
+            if (this.maxAverage<avgVariation){
+                this.maxAverage=avgVariation;
+            }
+            if(this.minAverage>avgVariation){
+                this.minAverage=avgVariation;
+            }
+            //result = (avgVariation / this.previousAverage) - 1;
+            result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
         }
 
+        previousFreqs[key] = freqData[key];
 
-        if (result < -0.1) {
+
+       /* if (result < -0.1) {
             result = 1;
         } else if (result < 0.1) {
             result = 0;
         } else {
             result = -1;
-        }
+        }*/
 
         this.log(result);
 
         this.previousAverage = avgVariation;
+        this.previousFrequency = previousFreqs;
         dataStream.push(result);
+    } else if (channel == 8) { //combines channels 4 and 7
+        var datasStream=[[],[]];
+
+        //channel 4
+        var isSilent = true;
+        for (key in freqData) {
+            if (freqData[key] > this.freqNoiseLevel) {
+                isSilent = false;
+            }
+        }
+        // Speaking!
+        if (!isSilent) {
+            this.lastSpokenTimestamp = new Date().getTime();
+            datasStream[0].push(1);
+        }
+        // Silent!
+        else {
+            if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
+                // Suddenly, silence.
+                datasStream[0].push(0);
+              
+            } else {
+                // The silence is too young.
+                datasStream[0].push(1);
+              
+            }
+        }
+
+        //channel 7
+
+        // Detect the average change in gain in relation to the last reading
+
+        var avgVariation = 0;
+
+         var previousFreqs = this.previousFrequency;
+        if (previousFreqs == null) {
+            previousFreqs = new Float32Array(this.analyser.frequencyBinCount);
+            for (key in previousFreqs) {
+                previousFreqs[key] = freqData[key];
+            }
+        }
+
+        for (key = 0; key < this.freqGain; key++) {
+            avgVariation += (freqData[key]-previousFreqs[key]);
+        }
+
+        //var gain = this.gainDifference;
+        //var levels = this.gainLevels;
+
+        avgVariation = avgVariation / this.analyser.frequencyBinCount;
+
+        if (this.previousAverage == 0) {
+            result = 0;
+            this.maxAverage=avgVariation;
+            this.minAverage=avgVariation;
+        } else {
+            if (this.maxAverage<avgVariation){
+                this.maxAverage=avgVariation;
+            }
+            if(this.minAverage>avgVariation){
+                this.minAverage=avgVariation;
+            }
+            //result = (avgVariation / this.previousAverage) - 1;
+            result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
+        }
+
+        previousFreqs[key] = freqData[key];
+
+
+       /* if (result < -0.1) {
+            result = 1;
+        } else if (result < 0.1) {
+            result = 0;
+        } else {
+            result = -1;
+        }*/
+
+        this.log(result);
+
+        this.previousAverage = avgVariation;
+        this.previousFrequency = previousFreqs;
+        datasStream[1].push(result);
+        dataStream=datasStream;
     }
     return dataStream;
 }
