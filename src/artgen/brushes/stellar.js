@@ -36,9 +36,11 @@ ARTGEN.addBrush('stellar', {
 		if (typeof data == "undefined") {
 			return;
 		}
-		if (data == 0) {
+		//if (data == 0) {
+		if (data[0] == 0) {
 			this.silenceCounter++;
-		} else if (data == 1) {
+		//} else if (data == 1) {
+		} else if (data[0] == 1) {
 			this.speakingCounter++;
 		}
 		else{}
@@ -69,7 +71,7 @@ ARTGEN.addBrush('stellar', {
 			this.speakingCounter = 0;
 		}
 		
-		this.simulateExpressiveness();
+		this.simulateExpressiveness(data);
 		this.naturalAccelerationDecrease();
 		this.naturalRepulsionDecrease();
 		var howMany = Math.floor(Math.random()*(1+1*this.expressiveness));
@@ -91,9 +93,10 @@ ARTGEN.addBrush('stellar', {
 		
 		this.feed(50);
     },
-	simulateExpressiveness: function() {
+	simulateExpressiveness: function(data) {
 		this.expCounter++;
-		this.expressiveness = 0.5 + 0.5*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI);
+		//this.expressiveness = 0.5 + 0.5*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI);
+		this.expressiveness=data[1];
 	},
 	naturalAccelerationDecrease: function(){
 		this.acceleration -= 0.01;
