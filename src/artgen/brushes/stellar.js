@@ -96,7 +96,7 @@ ARTGEN.addBrush('stellar', {
 	simulateExpressiveness: function(data) {
 		this.expCounter++;
 		//this.expressiveness = 0.5 + 0.5*Math.sin(this.expCounter/this.expressivenessVar*2*Math.PI);
-		this.expressiveness=data[1];
+		this.expressiveness=parseFloat(data[1]);
 	},
 	naturalAccelerationDecrease: function(){
 		this.acceleration -= 0.01;
