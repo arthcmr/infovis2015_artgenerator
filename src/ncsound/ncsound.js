@@ -27,6 +27,8 @@ NCSOUND.freqNoiseLevel = -60;
 NCSOUND.lastMaxDB = -100;
 NCSOUND.silenceDelay = 250; // In ms
 NCSOUND.lastSpokenTimestamp = null;
+NCSOUND.s = 0;
+NCSOUND.t = 0;
 
 //for StreamShape i=6
 NCSOUND.previousFrequency = null;
@@ -38,6 +40,17 @@ NCSOUND.freqGain = 24; // the range of frequencies taken to only cover the freq 
 NCSOUND.previousAverage = 0;
 //Sound bank
 NCSOUND.soundBank = {};
+
+
+NCSOUND.getS = function()
+{
+    return this.s;
+}
+
+NCSOUND.getT = function()
+{
+    return this.t;
+}
 
 NCSOUND.log = function(msg) {
     //console.log(msg);
@@ -186,7 +199,7 @@ NCSOUND.startMikeStream = function(callback) {
  * @returns {Array} Relevant data stream for ARTGEN
  */
 NCSOUND.streamShape = function(freqData, channel) {
-
+    this.t++;
     var dataStream = [];
     if (channel == 1) {
         // Input stream:
@@ -266,6 +279,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         // Silent!
         else {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
+                this.s++;
                 // Suddenly, silence.
                 dataStream.push(0);
             } else {
