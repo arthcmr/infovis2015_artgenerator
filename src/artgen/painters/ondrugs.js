@@ -1,5 +1,6 @@
 ARTGEN.addPainter('ondrugs', {
-	brushes: ['sunburst'],
+	brushes: ['colorose'],
+	//brushes: ['sunburst'],
 	//brushes: ['cannon'],
 	//brushes: ['transient'],
     paint: function(time, data){
