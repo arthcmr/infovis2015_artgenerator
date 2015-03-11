@@ -25,10 +25,11 @@
         </div>
         <div class="modal-body">
             Are you sure you want to end drawing ? 
-
             <hr/>
 
             <button type="button" id="getValuesButton" class="btn btn-info" onclick="getValues()" data-toggle="modal" data-target="#myModalStatistics">Get Values</button>
+
+            <a type="button" id="download" class="btn btn-info">Save as PNG</a>
 
         </div>
 
@@ -94,6 +95,16 @@
         console.log("S is: " + NCSOUND.getS());
         console.log("T is: " + NCSOUND.getT());
     }
+
+    //ScreenShot
+     function downloadCanvas(link, canvasId, filename) {
+        link.href = document.getElementById(canvasId).toDataURL();
+        link.download = filename;
+    }
+
+     document.getElementById('download').addEventListener('click', function() {
+        downloadCanvas(this, "visualization", 'screenshot.png');
+    }, false);
 
 
     NCSOUND.startMikeStream(function() {

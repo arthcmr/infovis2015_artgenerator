@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Project</title>
+    <link href="vendor/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="assets/styles/main.css">
 </head>
 
@@ -11,11 +12,39 @@
     <canvas id="visualization" class="visualization"></canvas>
     <!-- <canvas id="visualization2" class="visualization"></canvas> -->
 
+        <button id="endButton" class="btn btn-default" data-toggle="modal" data-target="#myModal">End Drawing</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">End Drawing</h4>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to end drawing ? 
+
+            <hr/>
+
+            <a type="button" id="download" class="btn btn-info">Save as PNG</a>
+
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+</div>
+</div>
+
     <script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
     <script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
     <script type="text/javascript" src="artgen/artgen.js"></script>
     <script type="text/javascript" src="ncsound/ncsound.js"></script>
+    <script src="vendor/bootstrap/dist/js/bootstrap.js"></script>
     <script type="text/javascript">
     //make canvas full screen
 
@@ -31,6 +60,16 @@
         leo.stop();
         leo.paint();
     }
+
+    //ScreenShot
+     function downloadCanvas(link, canvasId, filename) {
+        link.href = document.getElementById(canvasId).toDataURL();
+        link.download = filename;
+    }
+
+     document.getElementById('download').addEventListener('click', function() {
+        downloadCanvas(this, "visualization", 'screenshot.png');
+    }, false);
 	
 	setTimeout(function(){
 		NCSOUND.startMikeStream();
