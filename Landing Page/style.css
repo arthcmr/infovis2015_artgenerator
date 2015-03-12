@@ -1,0 +1,217 @@
+*{
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body{
+  font-family: 'Bitter', serif;
+}
+
+.hero{
+  background-position: center center;
+  background-repeat: no-repeat;
+  /*background-size: contain;*/
+  background-size: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: relative;
+}
+
+.hero-content{
+  text-align: center;
+}
+
+.brand{
+  font-family: 'Lato', sans-serif;
+  font-size: 40px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+strong{
+  font-style: italic;
+}
+
+.gradient-mask-text{
+  font-size: 1.4em;
+  line-height: 1.4em;
+  width: 60vw;
+  margin: 0 auto;
+  position: relative;
+  padding: 60px 20px;
+  background: transparent; 
+  /*background: url("http://newevolutiondesigns.com/images/freebies/polygon-wallpaper-14.jpg");*/
+  background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, #61c2ff), color-stop(100%, #cd4444));
+  background: -webkit-linear-gradient(-45deg, #61c2ff 0%, #cd4444 100%);
+  -webkit-background-clip: text; 
+  -webkit-text-fill-color: transparent; 
+  background-clip: text; 
+  text-fill-color: transparent;
+}
+
+.gradient-mask-text:after, .gradient-mask-text:before {
+    display: block;
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 252px;
+    margin-left: -126px;
+    height: 1px;
+    background: #6bb6ee;
+}
+
+.gradient-mask-text:before {
+    top: 0;
+    background: #6bb6ee;
+    background: -moz-linear-gradient(-45deg, #6bb6ee 0%, #8a92b8 100%);
+    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, #6bb6ee), color-stop(100%, #8a92b8));
+    background: -webkit-linear-gradient(-45deg, #6bb6ee 0%, #8a92b8 100%);
+    background: -o-linear-gradient(-45deg, #6bb6ee 0%, #8a92b8 100%);
+    background: -ms-linear-gradient(-45deg, #6bb6ee 0%, #8a92b8 100%);
+    background: linear-gradient(135deg, #6bb6ee 0%, #8a92b8 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#6bb6ee', endColorstr='#8a92b8',GradientType=1 );
+}
+
+.gradient-mask-text:after {
+    bottom: 0;
+    background: #9389aa;
+    background: -moz-linear-gradient(-45deg, #9389aa 0%, #b5606d 100%);
+    background: -webkit-gradient(linear, left top, right bottom, color-stop(0%, #9389aa), color-stop(100%, #b5606d));
+    background: -webkit-linear-gradient(-45deg, #9389aa 0%, #b5606d 100%);
+    background: -o-linear-gradient(-45deg, #9389aa 0%, #b5606d 100%);
+    background: -ms-linear-gradient(-45deg, #9389aa 0%, #b5606d 100%);
+    background: linear-gradient(135deg, #9389aa 0%, #b5606d 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#9389aa', endColorstr='#b5606d',GradientType=1 );
+}
+
+.text {
+  font-family: 'Lato', sans-serif;
+  font-size: 20px;
+  margin-bottom: 20px;
+  display: block;
+  font-weight: 200;
+}
+
+.intro {
+  max-width: 400px;
+  padding: 20px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer {
+  font-family: 'Lato', sans-serif;
+  max-width: 670px;
+  margin: 0 auto;
+  text-align: center;
+  font-size: 0.8em;
+  padding-top: 25px;
+  padding-bottom: 20px;
+  color: #b3b3b3;
+}
+.footer a{
+  color: inherit;
+}
+
+.line {
+    display: block;
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 750px;
+    margin-left: -375px;
+    /* height: 1px; */
+    /* background: #6bb6ee; */
+    border: 0;
+    border-top: 1px solid #000;
+    opacity: .2;
+}
+
+.button {
+    border-radius: 3px;
+    display: inline-block;
+    width: 200px;
+    padding: 10px 20px;
+    margin: 0 10 70 10;
+    border-style:none;
+    background: #DDD7D1;
+    /*transition cross-browser stuff*/
+    -webkit-transition: background 0.2s ease-out;  /* Safari 3.2+, Chrome */
+    -moz-transition: background 0.2s ease-out;  /* Firefox 4-15 */
+    -o-transition: background 0.2s ease-out;  /* Opera 10.5–12.00 */
+    transition: background 0.2s ease-out;  /* Firefox 16+, Opera 12.50+ */
+}
+.button:hover {
+    background: #BCB1A5;
+}
+.button a {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  font-family: 'Lato', sans-serif;
+  font-size: 1em;
+}
+
+.paragraph {
+  height: 80vh;
+}
+
+.image {
+  width: 80vw;
+  padding: 30px;
+}
+/* ANIMATED MOUSE
+======================================== */
+.mouse-wrap{
+  position: absolute;
+  display: block;
+  bottom: 80px;
+  left: 50%;
+  margin-left: -14px;
+  
+}
+
+.mouse{
+  width: 28px;
+  height: 50px;
+  border: 2px solid #999;
+  -webkit-border-radius: 12px;
+  -moz-border-radius: 12px;
+  border-radius: 12px;
+}
+
+.scroller{
+  width: 4px;
+  height: 4px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  background: #999;
+  top: 7px;
+  left: 11px;
+  position: relative;
+  -webkit-animation: mousescroll 1s ease-out infinite ;
+  -moz-animation: mousescroll 1s ease-out infinite ;
+}
+
+@-webkit-keyframes mousescroll {
+  0%{
+    -webkit-transform: translateY(0);
+    transform: translateY(0);
+    opacity: 1;
+    height: 4px;
+   }
+  100%{
+    -webkit-transform: translateY(20px);
+    transform: translateY(20px);
+    opacity: 0; 
+    height: 10px;
+  }
+}
