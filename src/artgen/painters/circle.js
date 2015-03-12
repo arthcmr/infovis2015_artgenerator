@@ -1,6 +1,6 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
-    brushes: ['ink'],
+    brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
@@ -41,7 +41,7 @@ ARTGEN.addPainter('circle', {
         zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
 
         //map brushes to values
-        var mappings = ['energy', 'energy2', 'energy', 'energy2', 'energy'];
+        var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
 
         var targets = [];
         for(var i=0; i<length; i++) {

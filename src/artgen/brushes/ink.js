@@ -8,7 +8,6 @@ ARTGEN.addBrush('ink', {
 
         this.ctx = c;
         this.ctx.lineJoin = this.ctx.lineCap = 'round';
-        this.ctx.save();
 
     },
     update: function() {
@@ -17,7 +16,6 @@ ARTGEN.addBrush('ink', {
     },
     draw: function() {
 
-        this.ctx.save();
         this.ctx.beginPath();
         var x1 = this._prevPOS.x;
         var y1 = this._prevPOS.y;
@@ -28,7 +26,6 @@ ARTGEN.addBrush('ink', {
         this.ctx.strokeStyle = this._settings.COLOR;
         this.ctx.lineTo(x2, y2);
         this.ctx.stroke();
-        this.ctx.restore();
 
     },
     setTarget: function(x, y) {
