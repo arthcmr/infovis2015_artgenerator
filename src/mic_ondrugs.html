@@ -1,6 +1,5 @@
 <!DOCTYPE HTML>
 <html>
-
 <head>
     <meta charset="UTF-8">
     <title>Project</title>
@@ -26,8 +25,9 @@
         <div class="modal-body">
             Are you sure you want to end drawing ? 
             <hr/>
+            <button data-dismiss="modal" aria-label="Close" type="button" id="getValuesButton" class="btn btn-info" onclick="getValues()" data-toggle="modal" data-target="#myModalStatistics">Get Values</button> 
 
-            <button data-dismiss="modal" aria-label="Close" type="button" id="getValuesButton" class="btn btn-info" onclick="getValues()" data-toggle="modal" data-target="#myModalStatistics">Get Values</button>
+            <a id="myLink" href="statistics.html" target="_blank">Get Statistics</a>
 
             <a type="button" id="download" class="btn btn-info">Save as PNG</a>
 
@@ -64,7 +64,7 @@
     </div>
 </div>
 </div>
-</div>
+    </div>
 
 <script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
 <script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
@@ -94,8 +94,9 @@
                 $("myModal").attr("aria-hidden", "false");
             });
         });
-        console.log("S is: " + NCSOUND.getS());
-        console.log("T is: " + NCSOUND.getT());
+        var i=NCSOUND.getIntensity();
+        window.alert("Intensity is: " + i[0]);
+        window.alert("Emotion is: " + NCSOUND.getT());
     }
 
     //ScreenShot
