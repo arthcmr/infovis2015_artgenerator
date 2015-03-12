@@ -29,6 +29,13 @@ NCSOUND.silenceDelay = 250; // In ms
 NCSOUND.lastSpokenTimestamp = null;
 NCSOUND.s = 0;
 NCSOUND.t = 0;
+NCSOUND.dataStream = [];
+NCSOUND.intensity= [];
+NCSOUND.emotion=[];
+NCSOUND.intCounter=0;
+NCSOUND.emCounter=0;
+NCSOUND.intaverage=0;
+NCSOUND.emaverage=0;
 
 //for StreamShape i=6
 NCSOUND.previousFrequency = null;
@@ -59,6 +66,14 @@ NCSOUND.getT = function()
     return this.t;
 }
 
+NCSOUND.getIntensity = function()
+{
+    return this.intensity;
+}
+NCSOUND.getEmotion = function()
+{
+    return this.emotion;
+}
 NCSOUND.log = function(msg) {
     //console.log(msg);
 }
@@ -207,8 +222,7 @@ NCSOUND.startMikeStream = function(callback) {
  */
 NCSOUND.streamShape = function(freqData, channel) {
     this.t++;
-
-    var dataStream = [];
+    
     //var dataStream = [[],[]];
 
     if (channel == 1) {
@@ -273,6 +287,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         dataStream = [freqData[0]];
         this.log(freqData[0]);
     } else if (channel == 4) {
+        window.alert(this.s);
         // From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
         // Takes NCSOUND.lastSpokenTimestamp into account
         var isSilent = true;
@@ -285,11 +300,13 @@ NCSOUND.streamShape = function(freqData, channel) {
         if (!isSilent) {
             this.lastSpokenTimestamp = new Date().getTime();
             dataStream.push(1);
+            
         }
         // Silent!
         else {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
                 this.s++;
+               // console.log(this.s);
                 // Suddenly, silence.
                 dataStream.push(0);
               
@@ -422,7 +439,13 @@ NCSOUND.streamShape = function(freqData, channel) {
         } else {
             result = -1;
         }*/
-
+        this.intCounter++;
+        if(this.intCounter<200){
+            this.intaverage=this.intaverage+result
+        }else{
+            this.intensity.push(this.intaverage/this.intCounter);
+             this.intCounter=0;
+        }
         this.log(result);
 
         this.previousAverage = avgVariation;
@@ -447,6 +470,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         else {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
                 // Suddenly, silence.
+                this.s++;
                 datasStream[0].push(0);
               
             } else {
@@ -522,6 +546,13 @@ NCSOUND.streamShape = function(freqData, channel) {
             this.maxFreqKey=dominantFreqKey;
         }
         dataStream.push(1-((this.freqGain-dominantFreqKey)/this.freqGain));
+        this.emCounter++;
+        if(this.emCounter<200){
+            this.emaverage=this.emaverage+1-((this.freqGain-dominantFreqKey)/this.freqGain)
+        }else{
+            this.emotion.push(this.emaverage/this.emCounter);
+            this.emCounter=0;
+        }
     }
     return dataStream;
 }
