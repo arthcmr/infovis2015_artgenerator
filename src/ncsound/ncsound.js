@@ -223,6 +223,7 @@ NCSOUND.startMikeStream = function(callback) {
 NCSOUND.streamShape = function(freqData, channel) {
     this.t++;
     
+    var dataStream = [];
     //var dataStream = [[],[]];
 
     if (channel == 1) {
