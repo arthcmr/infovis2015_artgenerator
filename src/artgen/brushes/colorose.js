@@ -1,9 +1,9 @@
 ARTGEN.addBrush('colorose', {
     init: function() {
 		
-		this.generation1 = 40;
+		this.generation1 = 20;
 		this.minThickness = 1;
-		this.minOpacity = 0.01;
+		this.minOpacity = 0.04;
 		this.minOpacityBackground = 0.0035;
 		this.birthRate = 0.06;
 		
@@ -52,7 +52,7 @@ ARTGEN.addBrush('colorose', {
 				
 			]
 		];
-		this.activeRGBank = 3;// Change to explore other color sets
+		this.activeRGBank = 0;// Change to explore other color sets
 		
 		this.around = [];
 		this.flying = [];
@@ -95,6 +95,9 @@ ARTGEN.addBrush('colorose', {
 		this.expressivenessVar = 500;
 		this.expressiveness = 0.5;
 
+		/**Adjust Number of Particles**/
+		this.hasAddedParticles=false;
+
     },
     update: function(canvas, ctx, data) {
 		if (typeof data == "undefined") {
@@ -136,15 +139,30 @@ ARTGEN.addBrush('colorose', {
 		this.simulateExpressiveness(data);
 		this.naturalRepulsionDecrease();
 		//var howMany = Math.floor(Math.random()*(1+1*this.expressiveness));// 1 in ?
-		var howMany = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
+		var howMany = Math.floor(Math.random()*(1 + this.birthRate+this.expressiveness));// 1 in ?
+		
 		this.feed(howMany);
 		this.detach(howMany);
+
+		if (this.expressiveness>0.6){
+			if(!this.hasAddedParticles){
+				this.detach (this.generation1*0.3);
+				this.hasAddedParticles=true;
+			}
+		} else if (this.expressiveness<0.5 ){
+			if (this.hasAddedParticles){
+				this.feed(this.generation1*0.3);
+				this.hasAddedParticles=false;
+			}
+		}
+
+				
 		this.moveBullets(canvas);
     },
     draw: function(ctx) {
         this.drawBullets(ctx);
     },
-    start: function(ctx, canvas) {
+    start: function(ctx, canvas,data) {
 		this.bigRadius = 0.45 * Math.min(canvas.height, canvas.width);
 		this.bigCenterX = canvas.width/2;
 		this.bigCenterY = canvas.height/2;
@@ -154,6 +172,7 @@ ARTGEN.addBrush('colorose', {
 		ctx.fill();*/
 		
 		this.feed(this.generation1);
+		
     },
 	simulateExpressiveness: function(data) {
 		this.expCounter++;
@@ -171,6 +190,7 @@ ARTGEN.addBrush('colorose', {
 		
 		// Live data with sunburst effect
 		this.expressiveness = 1/7 * Math.floor(7 * parseFloat(data[1]));
+		//this.expressiveness = parseFloat(data[1]);
 		// Blur the thresholds a little
 		this.expressiveness += 0.02*Math.random();
 		//console.log(this.expressiveness);
@@ -182,7 +202,7 @@ ARTGEN.addBrush('colorose', {
 		}
 	},
 	addBullet: function(way) {
-		var rad = this.bigRadius * (0.3 + 0.7 * this.expressiveness);
+		var rad = this.bigRadius * (0.2 + 0.8 * this.expressiveness);
 		var angle = 2*Math.PI*Math.random();
 		var colorIndex = Math.floor(Math.random() * this.RGBank[this.activeRGBank].length);
 		this.around.push({
@@ -302,7 +322,7 @@ ARTGEN.addBrush('colorose', {
 		
 		for (key2 in this.flying) {
 			var expander = Math.sqrt(this.flying[key2].r/30);
-			var opa = this.minOpacityBackground * expander;
+			var opa = this.minOpacityBackground * expander * this.expressiveness;
 			var rgb = this.flying[key2].rgb;
 			
 			ctx.fillStyle = "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + opa + ")";

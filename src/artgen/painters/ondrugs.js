@@ -7,7 +7,7 @@ ARTGEN.addPainter('ondrugs', {
     	var moon = this.getBrush(0);
     	if(!this._instantiated){
     		moon.setColor(randomColor());
-    		moon.start(this.ctx,this.canvas);
+    		moon.start(this.ctx,this.canvas, data);
     		this._instantiated = true;
     	}
     	moon.update(this.canvas,this.ctx,data);

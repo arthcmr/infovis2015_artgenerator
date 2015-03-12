@@ -2,7 +2,7 @@
  *  Audio JS for Art Generator
  *  Final project for KTH course DH2321 Information Visualization by M. Romero
  *
- * Arhur Câmara            arthurcamara@gmail.com
+ * Arhur CÃ¢mara            arthurcamara@gmail.com
  * Vera Fuest              vera.fuest@hotmail.de
  * Mladen Milivojevic      milivojevicmladen@gmail.com
  * Nora Tejada             ntexaa@gmail.com
@@ -43,11 +43,13 @@ NCSOUND.previousAverage = 0;
 NCSOUND.maxAverage=0;
 NCSOUND.minAverage=0;
 NCSOUND.maxLevel=60;
-NCSOUND.minLevel=-20;
+NCSOUND.minLevel=-10;
 //Sound bank
 NCSOUND.soundBank = {};
 
 NCSOUND.maxFreqKey=0;
+NCSOUND.prevMaxFreqKey=0;
+NCSOUND.freqDiffLevel =6;
 
 NCSOUND.getS = function()
 {
@@ -427,7 +429,7 @@ NCSOUND.streamShape = function(freqData, channel) {
 
         this.previousAverage = avgVariation;
         this.previousFrequency = previousFreqs;
-        dataStream.push(result);
+        dataStream.push(this.mapIntensity(result));
     } else if (channel == 8) { //combines channels 4, 7, and 9
         var datasStream=[[],[],[]];
 
@@ -495,7 +497,10 @@ NCSOUND.streamShape = function(freqData, channel) {
 
         this.previousAverage = avgVariation;
         this.previousFrequency = previousFreqs;
-        datasStream[1].push(result);
+        //console.log(this.mapIntensity(result));
+       
+        datasStream[1].push(this.mapIntensity(result));
+
 
         //Channel 9
         var dominantFreqKey=0;
@@ -507,7 +512,11 @@ NCSOUND.streamShape = function(freqData, channel) {
         if(dominantFreqKey>this.maxFreqKey){
             this.maxFreqKey=dominantFreqKey;
         }
-        datasStream[2].push(1-((this.freqGain-dominantFreqKey)/this.freqGain));
+
+        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain-1);
+        var emotion = ((1-((this.freqGain-dominantFreqKey)/this.freqGain))+emotionFactor)/2;
+
+        datasStream[2].push(emotion);
     
         dataStream=datasStream;
     }else if (channel == 9) {
@@ -521,7 +530,13 @@ NCSOUND.streamShape = function(freqData, channel) {
         if(dominantFreqKey>this.maxFreqKey){
             this.maxFreqKey=dominantFreqKey;
         }
-        dataStream.push(1-((this.freqGain-dominantFreqKey)/this.freqGain));
+
+        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain-1);
+        var emotion = ((1-((this.freqGain-dominantFreqKey)/this.freqGain))+emotionFactor)/2;
+
+        dataStream.push(emotion);
+
+        this.prevMaxFreqKey=dominantFreqKey;
     }
     return dataStream;
 }
@@ -542,5 +557,18 @@ NCSOUND.getData = function(channel) {
     this.analyser.getFloatFrequencyData(this.dataArray);
     return this.streamShape(this.dataArray, channel);
 }
+
+NCSOUND.mapIntensity = function(intensity){
+    if(intensity>0.6) {
+      intensity=intensity*0.6+0.4;
+    } else if (intensity<0.5){
+         intensity=intensity*0.3;
+    }
+
+    return intensity;
+
+}
+
+
 
 NCSOUND.initAudioContext();
