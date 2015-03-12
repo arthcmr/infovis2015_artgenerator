@@ -1,11 +1,7 @@
 //gogh is an example of painter that paints only monochromatic colors
-ARTGEN.addPainter('circle', {
-    brushes: ['ink'],
+ARTGEN.addPainter('strains', {
+    brushes: ['line'],
 
-    _calcPos: function(func, time, data, order, radius, reference) {
-        func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius/3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
-    },
 
     paint: function(time, data) {
 
@@ -32,27 +28,17 @@ ARTGEN.addPainter('circle', {
         max_height = max_y - min_y;
         center_x = this.canvas.width / 2;
         center_y = this.canvas.height / 2,
-        length = flocks.length;
+            length = flocks.length;
 
         var time_var = (time - this.first_time) / 1000;
 
-        var radius = max_height / 2;
-        zero_x = this._calcPos('cos', time_var, 0, 0, radius, center_x);
-        zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
-
         //map brushes to values
         var mappings = ['energy', 'energy2', 'energy', 'energy2', 'energy'];
+            var targets = [];
 
-        var targets = [];
-        for(var i=0; i<length; i++) {
-            var p = new Vector();
-            var d = data[mappings[i]] || 0;
-            p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
-            p.y = this._calcPos('sin', time_var, d, i, radius, center_y);
-            targets.push(p);
-        }
 
         if (!this._instantiated) {
+            this._prevData = { energy: 0, silence: 0, energy2: 0};
             this.color = "#FFFFFF";
             this.ctx.beginPath();
             this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
@@ -67,7 +53,21 @@ ARTGEN.addPainter('circle', {
                 return c;
             }
 
-            this.colors = formatColors([[6,43,104],[10,21,117],[8,95,127],[8,6,114],[4,71,99]]);
+            for (var i = 0; i < length; i++) {
+                var p = new Vector();
+                var d = data[mappings[i]] || 0;
+                p.x = center_x;
+                p.y = center_y;
+                targets.push(p);
+            }
+
+            this.colors = formatColors([
+                [6, 43, 104],
+                [10, 21, 117],
+                [8, 95, 127],
+                [8, 6, 114],
+                [4, 71, 99]
+            ]);
 
             //initial positions and colors based on silence
             for (var i = 0; i < flocks.length; i++) {
@@ -77,6 +77,14 @@ ARTGEN.addPainter('circle', {
             };
 
             this._instantiated = true;
+        } else {
+            for (var i = 0; i < length; i++) {
+                var p = new Vector();
+                var d = data[mappings[i]] || 0;
+                p.x = max_width * data.silence;
+                p.y = -100;
+                targets.push(p);
+            }
         }
 
         // for (var i = 0; i < flocks.length; i++) {
@@ -91,18 +99,29 @@ ARTGEN.addPainter('circle', {
         this.ctx.fill();
 
         // target_x2 -= (!data * max_width);
+        var diff = Math.abs(data.energy - this._prevData.energy);
+
 
         for (var i = 0; i < flocks.length; i++) {
-            if(targets[i].x === zero_x && targets[i].y === zero_y) {
-                flocks[i].disable();
+            
+            if(diff > 0.2) console.log(diff);
+            var s = flocks[i]._settings;
+            if(diff > 0.2) {
+                s.MAX_SPEED = 3;
+                s.DESIRED_SEPARATION = diff * 100000;
+                s.TARGET_FORCE = 0;
             } else {
-                flocks[i].enable();
-            } 
+                s.MAX_SPEED = 3;
+                s.DESIRED_SEPARATION = diff * 100000;
+                s.TARGET_FORCE = 2000;
+            }
 
             flocks[i].setTarget(targets[i].x, targets[i].y);
             flocks[i].update();
             flocks[i].draw();
         }
+
+        this._prevData = _.clone(data);
 
     }
 });
