@@ -223,6 +223,8 @@ NCSOUND.startMikeStream = function(callback) {
 NCSOUND.streamShape = function(freqData, channel) {
     this.t++;
     
+    var dataStream=[];
+
     //var dataStream = [[],[]];
 
     if (channel == 1) {
@@ -287,7 +289,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         dataStream = [freqData[0]];
         this.log(freqData[0]);
     } else if (channel == 4) {
-        window.alert(this.s);
+        //window.alert(this.s);
         // From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
         // Takes NCSOUND.lastSpokenTimestamp into account
         var isSilent = true;
