@@ -42,6 +42,8 @@ NCSOUND.absoluteMin=0;
 NCSOUND.previousAverage = 0;
 NCSOUND.maxAverage=0;
 NCSOUND.minAverage=0;
+NCSOUND.maxLevel=60;
+NCSOUND.minLevel=-20;
 //Sound bank
 NCSOUND.soundBank = {};
 
@@ -392,7 +394,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         //var gain = this.gainDifference;
         //var levels = this.gainLevels;
 
-        avgVariation = avgVariation / this.analyser.frequencyBinCount;
+        avgVariation = avgVariation /this.freqGain;
 
         if (this.previousAverage == 0) {
             result = 0;
@@ -406,7 +408,8 @@ NCSOUND.streamShape = function(freqData, channel) {
                 this.minAverage=avgVariation;
             }
             //result = (avgVariation / this.previousAverage) - 1;
-            result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
+            //result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
+            result = 1-((this.maxLevel-avgVariation)/(this.maxLevel-this.minLevel));
         }
 
         previousFreqs[key] = freqData[key];
@@ -425,7 +428,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         this.previousAverage = avgVariation;
         this.previousFrequency = previousFreqs;
         dataStream.push(result);
-    } else if (channel == 8) { //combines channels 4 and 7
+    } else if (channel == 8) { //combines channels 4, 7, and 9
         var datasStream=[[],[],[]];
 
         //channel 4
@@ -471,7 +474,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         //var gain = this.gainDifference;
         //var levels = this.gainLevels;
 
-        avgVariation = avgVariation / this.analyser.frequencyBinCount;
+        avgVariation = avgVariation / this.freqGain;
 
         if (this.previousAverage == 0) {
             result = 0;
@@ -485,7 +488,8 @@ NCSOUND.streamShape = function(freqData, channel) {
                 this.minAverage=avgVariation;
             }
             //result = (avgVariation / this.previousAverage) - 1;
-            result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
+            //result = 1-((this.maxAverage-avgVariation)/(this.maxAverage-this.minAverage));
+            result = 1-((this.maxLevel-avgVariation)/(this.maxLevel-this.minLevel));
         }
         previousFreqs[key] = freqData[key];
 
@@ -503,7 +507,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         if(dominantFreqKey>this.maxFreqKey){
             this.maxFreqKey=dominantFreqKey;
         }
-        datasStream[2].push(1-((this.maxFreqKey-dominantFreqKey)/this.maxFreqKey));
+        datasStream[2].push(1-((this.freqGain-dominantFreqKey)/this.freqGain));
     
         dataStream=datasStream;
     }else if (channel == 9) {
@@ -517,7 +521,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         if(dominantFreqKey>this.maxFreqKey){
             this.maxFreqKey=dominantFreqKey;
         }
-        dataStream.push(1-((this.maxFreqKey-dominantFreqKey)/this.maxFreqKey));
+        dataStream.push(1-((this.freqGain-dominantFreqKey)/this.freqGain));
     }
     return dataStream;
 }
