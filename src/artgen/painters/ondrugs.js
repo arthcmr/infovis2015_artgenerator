@@ -1,5 +1,6 @@
 ARTGEN.addPainter('ondrugs', {
-	brushes: ['colorose'],
+	brushes: ['poneytail'],
+	//brushes: ['colorose'],
 	//brushes: ['sunburst'],
 	//brushes: ['cannon'],
 	//brushes: ['transient'],
