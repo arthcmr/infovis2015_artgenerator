@@ -56,6 +56,8 @@ NCSOUND.soundBank = {};
 
 NCSOUND.maxFreqKey=0;
 
+NCSOUND.enable = true;
+
 NCSOUND.getS = function()
 {
     return this.s;
@@ -64,6 +66,11 @@ NCSOUND.getS = function()
 NCSOUND.getT = function()
 {
     return this.t;
+}
+
+NCSOUND.isEnabled = function()
+{
+    return this.enable;
 }
 
 NCSOUND.getIntensity = function()
@@ -287,8 +294,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         // Amplitude of lowest pitch frequency
         dataStream = [freqData[0]];
         this.log(freqData[0]);
-    } else if (channel == 4) {
-        window.alert(this.s);
+    } else if (channel == 4) {        
         // From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
         // Takes NCSOUND.lastSpokenTimestamp into account
         var isSilent = true;
