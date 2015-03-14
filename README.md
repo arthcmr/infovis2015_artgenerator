@@ -26,16 +26,16 @@ Include the dependencies: jQuery, Lodash and randomColor (optional), then includ
 
 ###Instantiate and initialize
 
-HTML:
+HTML snippet:
 
 ```html
 <canvas id="myAwesomePainting"></canvas>
 ```
 
-JAVASCRIPT:
+Javascript snippet:
 
 ```javascript
-//instantiate with canvasId and painter
+//instantiate with canvas id and painter
 var painter = ARTGEN.init("myAwesomePainting", "leonardo");
 
 //play sound and connect data
