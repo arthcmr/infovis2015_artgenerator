@@ -513,9 +513,10 @@ NCSOUND.streamShape = function(freqData, channel) {
             this.maxFreqKey=dominantFreqKey;
         }
 
-        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain-1);
-        var emotion = ((1-((this.freqGain-dominantFreqKey)/this.freqGain))+emotionFactor)/2;
+        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain/2-1);
+        var emotion = ((1-((this.freqGain/2-dominantFreqKey)/this.freqGain/2))+emotionFactor)/2;
 
+        console.log(emotion);
         datasStream[2].push(emotion);
     
         dataStream=datasStream;
@@ -531,8 +532,8 @@ NCSOUND.streamShape = function(freqData, channel) {
             this.maxFreqKey=dominantFreqKey;
         }
 
-        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain-1);
-        var emotion = ((1-((this.freqGain-dominantFreqKey)/this.freqGain))+emotionFactor)/2;
+        var emotionFactor=Math.abs(dominantFreqKey-this.prevMaxFreqKey)/(this.freqGain/2-1);
+        var emotion = ((1-((this.freqGain/2-dominantFreqKey)/this.freqGain/2))+emotionFactor)/2;
 
         dataStream.push(emotion);
 

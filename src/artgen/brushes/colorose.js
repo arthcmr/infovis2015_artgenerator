@@ -9,13 +9,13 @@ ARTGEN.addBrush('colorose', {
 		
 		this.RGBank = [
 			[	// 0 - Violets
-				[42, 87, 167],
 				[100, 47, 120],
-				[43, 51, 86],
-				[7, 31, 70],
-				[25, 18, 52],
 				[45, 66, 134],
-				[5, 11, 46]
+				[43, 51, 86],
+				[25, 18, 52],
+				[7, 31, 70],
+				[5, 11, 46],
+				[42, 87, 167],
 			], [ // 1 - Dragons & fire
 				[255, 147, 21],
 				[24, 34, 36],
@@ -98,6 +98,9 @@ ARTGEN.addBrush('colorose', {
 		/**Adjust Number of Particles**/
 		this.hasAddedParticles=false;
 
+		/**Adjust Number of Colors**/
+		this.emotionIndex=0;
+
     },
     update: function(canvas, ctx, data) {
 		if (typeof data == "undefined") {
@@ -141,20 +144,24 @@ ARTGEN.addBrush('colorose', {
 		//var howMany = Math.floor(Math.random()*(1+1*this.expressiveness));// 1 in ?
 		var howMany = Math.floor(Math.random()*(1 + this.birthRate+this.expressiveness));// 1 in ?
 		
+		this.emotionIndex= Math.floor(parseFloat(data[2])*6);
+
 		this.feed(howMany);
 		this.detach(howMany);
 
 		if (this.expressiveness>0.6){
-			if(!this.hasAddedParticles){
+			// if(!this.hasAddedParticles){
+				this.feed(this.generation1*0.3);	
 				this.detach (this.generation1*0.3);
 				this.hasAddedParticles=true;
-			}
-		} else if (this.expressiveness<0.5 ){
-			if (this.hasAddedParticles){
-				this.feed(this.generation1*0.3);
-				this.hasAddedParticles=false;
-			}
-		}
+			// }	
+		} 
+		// else if (this.expressiveness<0.5 ){
+		// 	if (this.hasAddedParticles){
+		// 		this.feed(this.generation1*0.3);
+		// 		this.hasAddedParticles=false;
+		// 	}
+		// }
 
 				
 		this.moveBullets(canvas);
@@ -205,6 +212,8 @@ ARTGEN.addBrush('colorose', {
 		var rad = this.bigRadius * (0.2 + 0.8 * this.expressiveness);
 		var angle = 2*Math.PI*Math.random();
 		var colorIndex = Math.floor(Math.random() * this.RGBank[this.activeRGBank].length);
+
+
 		this.around.push({
 			r: rad,
 			rLast: rad,
