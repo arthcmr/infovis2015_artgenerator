@@ -9,10 +9,14 @@
 </head>
 
 <body>
+
+    
+
+
     <canvas id="visualization" class="visualization"></canvas>
     <!-- <canvas id="visualization2" class="visualization"></canvas> -->
 
-    <button id="endButton" class="btn btn-default" data-toggle="modal" data-target="#myModal">End Drawing</button>
+    <button id="endButton" class="btn btn-default" data-toggle="modal" onClick="startDrawing()" ><span class="glyphicon glyphicon-play"></span></button>
 
     <!-- Modal -->
     <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -46,6 +50,34 @@
     <script type="text/javascript" src="ncsound/ncsound.js"></script>
     <script src="vendor/bootstrap/dist/js/bootstrap.js"></script>
     <script type="text/javascript">
+    
+    var checked = false;
+
+    function startDrawing(){
+        
+        if(checked == false)
+        {
+            checked = true;
+            //change the button to End Drawing and add the following attribute
+            $("#endButton span").attr("class", "glyphicon glyphicon-pause");            
+
+            setTimeout(function(){
+                NCSOUND.playSound('ncsound/sounds/tada.mp3', function() {
+                console.log("Starting...");
+                resizeCanvas();
+                setInterval(function() {
+                    data = NCSOUND.getData();
+                    leo.data = data;
+                }, 25);
+            });
+            },500);   
+        }
+        else
+        {
+            $("#endButton").attr("data-target", "#myModal");
+        }                            
+    }
+
     //make canvas full screen
 
     var leo = ARTGEN.init("visualization", "picasso");
@@ -69,25 +101,12 @@
 
      document.getElementById('download').addEventListener('click', function() {
         downloadCanvas(this, "visualization", 'screenshot.png');
-    }, false);
-    
-    
-   setTimeout(function(){
-        NCSOUND.playSound('ncsound/sounds/weather.mp3', function() {
-        console.log("Starting...");
-        resizeCanvas();
-        setInterval(function() {
-            data = NCSOUND.getData();
-            leo.data = data;
-        }, 25);
-    });
-    },500);
+    }, false);   
 
-    
-    setTimeout(function(){
+    /*setTimeout(function(){
      NCSOUND.startFeedbackStream(leo);    
      resizeCanvas();
- },1000);
+    },1000);*/
     
 	/*
     leo.data = Math.random();
