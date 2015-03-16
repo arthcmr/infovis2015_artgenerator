@@ -1,15 +1,17 @@
 ARTGEN.addBrush('thunderbolt', {
     init: function() {
 		
-		this.generation1 = 200;
+		this.generation1 = 350;
 		this.minThickness = 1;
-		this.minOpacity = 0.04;
+		this.minOpacity = 0.0015;
 		this.minOpacityBackground = 0.0035;
-		this.birthRate = 0.06;
+		this.birthRate = 2.4;
+		this.deathRateBasis = 1.6;
+		this.repulsionToDeathRate = 0.1;
 		
 		this.air = [];
 		this.falling = [];
-		this.gravity = 0.02;
+		this.inverseOfStickiness = 0.002;
 		
 		/** Delayers **/
 		this.silenceCounter = 0;
@@ -18,7 +20,7 @@ ARTGEN.addBrush('thunderbolt', {
 		this.speakingCountMax = 3;
 		
 		/** Repulsion **/
-		this.repulsion = 0;
+		this.repulsion = 25;
 		this.minRep = 0;
 		this.maxRep = 50;
 		this.maxRepScale = 30;//px
@@ -27,11 +29,15 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		/** Expressiveness **/
 		this.expressiveness = 0.5;
-		this.expBuffer = [];
-		this.expBufferSize = 50;
-		
+		//this.expBuffer = [];
+		//this.expBufferSize = 50;
 		this.expCounter = 0;
 		this.expressivenessVar = 500;
+		
+		/** Energy **/
+		this.energy = .5;
+		this.energyCounter = 0;
+		this.energyVar = 1000;
 		
 		/** Positron **/
 		this.positronX;
@@ -61,23 +67,20 @@ ARTGEN.addBrush('thunderbolt', {
 			if (this.repulsion >= this.maxRep) { this.repulsion = this.maxRep; }
 		}
 		
-		if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
+		//if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
 		//this.expBuffer.push(parseFloat(data[1]));
 		this.simulateExpressiveness();
-		this.expBuffer.push(this.expressiveness);
+		this.simulateEnergy();
+		//this.expBuffer.push(this.expressiveness);
 		
 		var births = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
-		var deaths = Math.floor(Math.random()*(1 + this.repulsion/150));// 1 in ?
+		var deaths = Math.floor(Math.random()*(1 + this.deathRateBasis + this.repulsion * this.repulsionToDeathRate));// 1 in ?
 		
 		this.feed(births);
 		if (this.air.length > deaths) { this.detach(deaths); }
 		
 		this.movePositron(canvas);
 		this.moveElectrons(canvas);
-		/*console.log("Positron", this.positronX);
-		console.log("buffer", this.expBuffer.length);
-		console.log("air", this.air.length);
-		console.log("falling", this.falling.length);*/
 		
     },
     draw: function(ctx) {
@@ -90,17 +93,22 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		this.positronX = 0;
 		this.positronY = canvas.height/2;
-		this.positronSpeedX = 0.5;
+		this.positronSpeedX = 0;
 		this.positronSpeedY = 0;
-		this.positronRad = 10;
+		this.positronSpeed = 0.5;
+		
+		this.positronRad = 5;
 		
 		this.feed(this.generation1);
     },
 	simulateExpressiveness: function() {
 		this.expCounter++;
-		// Full range
-		this.expressiveness = 0.5 + 0.4*Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar)*Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
+		this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
 		
+	},
+	simulateEnergy: function() {
+		this.energyCounter++;
+		this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
 	},
 	addElectron: function(x, y, xSpeed, ySpeed) {
 		this.air.push({
@@ -109,18 +117,24 @@ ARTGEN.addBrush('thunderbolt', {
 			y: y,
 			yLast: y,
 			xSpeed: xSpeed,
-			ySpeed: ySpeed
+			ySpeed: ySpeed,
+			yDist: 0
 		});
 	},
 	movePositron: function(canvas) {
-		var expAvg = 0;
-		for (key in this.expBuffer) {
-			expAvg += this.expBuffer[key];
-		}
-		expAvg /= this.expBuffer.length;
-		this.positronSpeedY += this.expressivenessInfluence * (expAvg - this.expressivenessThreshold);
+		//var expAvg = 0;
+		//for (key in this.expBuffer) {
+		//	expAvg += this.expBuffer[key];
+		//}
+		//expAvg /= this.expBuffer.length;
+		//var positronSpeedAng = 2*Math.PI * ( -1/4 + 1/2 * this.expressivenessInfluence * (expAvg - this.expressivenessThreshold) );
+		var positronSpeedAng = 2*Math.PI * ( -1/4 + 1/2 * this.expressiveness );
+		this.positronSpeedX = this.positronSpeed * Math.cos(positronSpeedAng); 
+		this.positronSpeedY = this.positronSpeed * Math.sin(positronSpeedAng); 
 		this.positronX += this.positronSpeedX;
 		this.positronY += this.positronSpeedY;
+		
+		this.positronRad = 10 * this.energy;
 	},
 	moveElectrons: function(canvas) {
 	
@@ -129,10 +143,20 @@ ARTGEN.addBrush('thunderbolt', {
 			var electron = this.air[key];
 			electron.xLast = electron.x;
 			electron.yLast = electron.y;
-			electron.x += this.positronSpeedX;
-			electron.y += this.positronSpeedY;
-			electron.xSpeed = this.positronSpeedX;
-			electron.ySpeed = this.positronSpeedY;
+			var distToPositronCenter = Math.sqrt(Math.pow(electron.x - this.positronX, 2) + Math.pow(electron.y - this.positronY, 2));
+			// Spread the air electrons in the whole positron radius effect
+			electron.xSpeed = this.positronSpeedX; //+ 0.01 * Math.random() * Math.max(this.positronRad - distToPositronCenter, 0);
+			electron.ySpeed = this.positronSpeedY; //+ 0.01 * Math.random() * Math.max(this.positronRad - distToPositronCenter, 0);
+			electron.x += electron.xSpeed;
+			electron.y += electron.ySpeed;
+			var newDistToPositronCenter = Math.sqrt(Math.pow(electron.x - this.positronX, 2) + Math.pow(electron.y - this.positronY, 2));
+			var toReduceBy = newDistToPositronCenter / this.positronRad;
+			electron.x  = this.positronX + (electron.x - this.positronX)/toReduceBy;
+			electron.y  = this.positronY + (electron.y - this.positronY)/toReduceBy;
+			// Don't forget last positions, otherwise ugly lines
+			electron.xLast  = this.positronX + (electron.xLast - this.positronX)/toReduceBy;
+			electron.yLast  = this.positronY + (electron.yLast - this.positronY)/toReduceBy;
+			
 		}
 		
 		// In falling
@@ -142,10 +166,24 @@ ARTGEN.addBrush('thunderbolt', {
 			electron.xLast = electron.x;
 			electron.yLast = electron.y;
 			
-			// Gravity
-			electron.ySpeed += this.gravity;
+			
+			
+			// Extra force so that the still follow the shape of the main beam
+			//var attractor = (electron.y > this.positronY ? electron.y - this.positronY : 0);
+			var attractor = (electron.y - this.positronY) / 100;
+			//electron.ySpeed += this.positronSpeedY / 10;
+			
+			// "Gravity"
+			electron.ySpeed += this.inverseOfStickiness * attractor;
+			
+			// Motion
+			electron.xSpeed = this.positronSpeedX;
 			electron.x += electron.xSpeed;
-			electron.y += electron.ySpeed;
+			//electron.y += electron.ySpeed;
+			//electron.yDist *= 1 + this.inverseOfStickiness;
+			electron.yDist += electron.ySpeed;
+			
+			electron.y = this.positronY + electron.yDist;
 			
 			// Kill electrons that reach the edges of the canvas
 			if (electron.x > canvas.width || electron.y > canvas.height || electron.x < 0 || electron.y < 0) {
@@ -171,7 +209,7 @@ ARTGEN.addBrush('thunderbolt', {
 		for (key2 in this.falling) {
 			var electron = this.falling[key2];
 			ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-			ctx.lineWidth = 2;
+			ctx.lineWidth = 1;
 			ctx.beginPath();
 			ctx.moveTo(electron.xLast, electron.yLast);
 			ctx.lineTo(electron.x, electron.y);
