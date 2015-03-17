@@ -35,7 +35,7 @@ ARTGEN.addPainter('circle', {
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
+        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 50 * (order * 0.5 + 1))) + reference;
     },
 
     paint: function(time, data) {
