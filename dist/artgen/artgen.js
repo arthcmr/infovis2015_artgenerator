@@ -3674,13 +3674,13 @@ ARTGEN.addPainter('circle', {
     // determine, in order, what the data values are used for
     data_values: [{
         description: "used for the 1st and 3rd brushes",
-        options: ["rms", "energy","perceptualSharpness"]
+        options: ["mfcc", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
     }, {
         description: "used for the 2nd and 5th brushes",
-        options: ["perceptualSharpness", "rms", "energy"]
+        options: ["rms", "zcr", "mfcc", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
     }, {
         description: "used for the 4th brush",
-        options: ["energy", "rms", "perceptualSharpness"]
+        options: ["energy", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
     }],
 
     //extra visual options
