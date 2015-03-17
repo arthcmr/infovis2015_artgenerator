@@ -28,7 +28,7 @@ Collection.prototype.add = function(name, extend, methods, meta_info) {
 
     //clone meta_info
     for(var i in meta_info) {
-        meta_info[i] = _.cloneDeep(methods[i]);
+        meta_info[i] = (!_.isUndefined(methods[i])) ? _.cloneDeep(methods[i]) : meta_info[i];
     }
 
     //add item

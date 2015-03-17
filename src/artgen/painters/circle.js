@@ -1,7 +1,13 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
 
-    /* determine, in order, what the data values are used for */
+    /* =============== META INFORMATION ================= */
+
+    title: "Circle",
+    description: "The ephemeral nature of speech represented through deformed rings",
+    tags: ["energy", "color", "expressiveness"],
+
+    // determine, in order, what the data values are used for
     data_values: [{
         description: "used for the 1st and 3rd brushes",
         options: ["rms", "energy","perceptualSharpness"]
@@ -13,6 +19,7 @@ ARTGEN.addPainter('circle', {
         options: ["energy", "rms", "perceptualSharpness"]
     }],
 
+    //extra visual options
     options: {
         color: {
             name: "Color",
@@ -20,6 +27,9 @@ ARTGEN.addPainter('circle', {
             options: ["red", "blue", "purple", "monochromatic", "green", "orange", "gold", "*"]
         }
     },
+
+
+    /* =============== IMPLEMENTATION ================= */
 
     brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
 
@@ -61,13 +71,11 @@ ARTGEN.addPainter('circle', {
         zero_x = this._calcPos('cos', time_var, 0, 0, radius, center_x);
         zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
 
-        //map brushes to values
-        var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
 
         var targets = [];
         for (var i = 0; i < length; i++) {
             var p = new Vector();
-            var d = data[mappings[i]] || 0;
+            var d = data[i] || 0;
             p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
             p.y = this._calcPos('sin', time_var, d, i, radius, center_y);
             targets.push(p);

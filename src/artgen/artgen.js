@@ -9,10 +9,10 @@ ARTGEN._brushes = new Collection(baseBrush);
 ARTGEN._painters = new Collection(basePainter);
 
 //meta information about brushes
-ARTGEN._info_brushes = {};
+ARTGEN.info_brushes = {};
 
 //meta information about painters
-ARTGEN._info_painters = {};
+ARTGEN.info_painters = {};
 
 //logs messages
 ARTGEN.log = function(msg) {
@@ -28,8 +28,8 @@ ARTGEN.log = function(msg) {
  */
 ARTGEN.addBrush = function(name, extend, method) {
     //store meta information reference
-    this._info_brushes[name] = {};
-    this._brushes.add(name, extend, method, this._info_brushes[name]);
+    this.info_brushes[name] = {};
+    this._brushes.add(name, extend, method, this.info_brushes[name]);
 };
 
 /* 
@@ -42,11 +42,14 @@ ARTGEN.addBrush = function(name, extend, method) {
 ARTGEN.addPainter = function(name, extend, method) {
 
     //store meta information reference
-    this._info_painters[name] = {
+    this.info_painters[name] = {
+        title: "",
+        description: "",
+        tags: [],
         data_values: {},
         options: {}
     };
-    this._painters.add(name, extend, method, this._info_painters[name]);
+    this._painters.add(name, extend, method, this.info_painters[name]);
 };
 
 /* 

@@ -41,7 +41,7 @@ Collection.prototype.add = function(name, extend, methods, meta_info) {
 
     //clone meta_info
     for(var i in meta_info) {
-        meta_info[i] = _.cloneDeep(methods[i]);
+        meta_info[i] = (!_.isUndefined(methods[i])) ? _.cloneDeep(methods[i]) : meta_info[i];
     }
 
     //add item
@@ -364,10 +364,10 @@ ARTGEN._brushes = new Collection(baseBrush);
 ARTGEN._painters = new Collection(basePainter);
 
 //meta information about brushes
-ARTGEN._info_brushes = {};
+ARTGEN.info_brushes = {};
 
 //meta information about painters
-ARTGEN._info_painters = {};
+ARTGEN.info_painters = {};
 
 //logs messages
 ARTGEN.log = function(msg) {
@@ -383,8 +383,8 @@ ARTGEN.log = function(msg) {
  */
 ARTGEN.addBrush = function(name, extend, method) {
     //store meta information reference
-    this._info_brushes[name] = {};
-    this._brushes.add(name, extend, method, this._info_brushes[name]);
+    this.info_brushes[name] = {};
+    this._brushes.add(name, extend, method, this.info_brushes[name]);
 };
 
 /* 
@@ -397,11 +397,14 @@ ARTGEN.addBrush = function(name, extend, method) {
 ARTGEN.addPainter = function(name, extend, method) {
 
     //store meta information reference
-    this._info_painters[name] = {
+    this.info_painters[name] = {
+        title: "",
+        description: "",
+        tags: [],
         data_values: {},
         options: {}
     };
-    this._painters.add(name, extend, method, this._info_painters[name]);
+    this._painters.add(name, extend, method, this.info_painters[name]);
 };
 
 /* 
@@ -3317,7 +3320,13 @@ ARTGEN.addPainter('astronaut', {
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
 
-    /* determine, in order, what the data values are used for */
+    /* =============== META INFORMATION ================= */
+
+    title: "Circle",
+    description: "The ephemeral nature of speech represented through deformed rings",
+    tags: ["energy", "color", "expressiveness"],
+
+    // determine, in order, what the data values are used for
     data_values: [{
         description: "used for the 1st and 3rd brushes",
         options: ["rms", "energy","perceptualSharpness"]
@@ -3329,6 +3338,7 @@ ARTGEN.addPainter('circle', {
         options: ["energy", "rms", "perceptualSharpness"]
     }],
 
+    //extra visual options
     options: {
         color: {
             name: "Color",
@@ -3336,6 +3346,9 @@ ARTGEN.addPainter('circle', {
             options: ["red", "blue", "purple", "monochromatic", "green", "orange", "gold", "*"]
         }
     },
+
+
+    /* =============== IMPLEMENTATION ================= */
 
     brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
 
@@ -3377,13 +3390,11 @@ ARTGEN.addPainter('circle', {
         zero_x = this._calcPos('cos', time_var, 0, 0, radius, center_x);
         zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
 
-        //map brushes to values
-        var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
 
         var targets = [];
         for (var i = 0; i < length; i++) {
             var p = new Vector();
-            var d = data[mappings[i]] || 0;
+            var d = data[i] || 0;
             p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
             p.y = this._calcPos('sin', time_var, d, i, radius, center_y);
             targets.push(p);
