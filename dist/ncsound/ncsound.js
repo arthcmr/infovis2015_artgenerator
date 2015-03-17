@@ -2,7 +2,7 @@
  *  Audio JS for Art Generator
  *  Final project for KTH course DH2321 Information Visualization by M. Romero
  *
- * Arhur CÃ¢mara            arthurcamara@gmail.com
+ * Arhur Câmara            arthurcamara@gmail.com
  * Vera Fuest              vera.fuest@hotmail.de
  * Mladen Milivojevic      milivojevicmladen@gmail.com
  * Nora Tejada             ntexaa@gmail.com
@@ -29,6 +29,13 @@ NCSOUND.silenceDelay = 250; // In ms
 NCSOUND.lastSpokenTimestamp = null;
 NCSOUND.s = 0;
 NCSOUND.t = 0;
+NCSOUND.dataStream = [];
+NCSOUND.intensity= [];
+NCSOUND.emotion=[];
+NCSOUND.intCounter=0;
+NCSOUND.emCounter=0;
+NCSOUND.intaverage=0;
+NCSOUND.emaverage=0;
 
 //for StreamShape i=6
 NCSOUND.previousFrequency = null;
@@ -43,13 +50,13 @@ NCSOUND.previousAverage = 0;
 NCSOUND.maxAverage=0;
 NCSOUND.minAverage=0;
 NCSOUND.maxLevel=60;
-NCSOUND.minLevel=-10;
+NCSOUND.minLevel=-20;
 //Sound bank
 NCSOUND.soundBank = {};
 
 NCSOUND.maxFreqKey=0;
-NCSOUND.prevMaxFreqKey=0;
-NCSOUND.freqDiffLevel =6;
+
+NCSOUND.enable = true;
 
 NCSOUND.getS = function()
 {
@@ -61,6 +68,19 @@ NCSOUND.getT = function()
     return this.t;
 }
 
+NCSOUND.isEnabled = function()
+{
+    return this.enable;
+}
+
+NCSOUND.getIntensity = function()
+{
+    return this.intensity;
+}
+NCSOUND.getEmotion = function()
+{
+    return this.emotion;
+}
 NCSOUND.log = function(msg) {
     //console.log(msg);
 }
@@ -274,7 +294,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         // Amplitude of lowest pitch frequency
         dataStream = [freqData[0]];
         this.log(freqData[0]);
-    } else if (channel == 4) {
+    } else if (channel == 4) {        
         // From raw freq data to 0 or 1: silence or speech, compare max decibel value to NCSOUND.freqNoiceLevel
         // Takes NCSOUND.lastSpokenTimestamp into account
         var isSilent = true;
@@ -287,11 +307,13 @@ NCSOUND.streamShape = function(freqData, channel) {
         if (!isSilent) {
             this.lastSpokenTimestamp = new Date().getTime();
             dataStream.push(1);
+            
         }
         // Silent!
         else {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
                 this.s++;
+               // console.log(this.s);
                 // Suddenly, silence.
                 dataStream.push(0);
               
@@ -449,6 +471,7 @@ NCSOUND.streamShape = function(freqData, channel) {
         else {
             if (new Date().getTime() - this.lastSpokenTimestamp > 250) {
                 // Suddenly, silence.
+                this.s++;
                 datasStream[0].push(0);
               
             } else {
