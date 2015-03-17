@@ -23,8 +23,9 @@ function Collection (base) {
  * @param {String} name Name of the new item
  * @param {String|Object} extend Name of item to extend from
  * @param {Object} methods Methods of the new item
+ * @param {Object} object for meta_information
  */
-Collection.prototype.add = function(name, extend, methods) {
+Collection.prototype.add = function(name, extend, methods, meta_info) {
     
     //start collection if not existing
     this._items = this._items || {};
@@ -36,6 +37,11 @@ Collection.prototype.add = function(name, extend, methods) {
         from = this._base;
     } else {
         from = this._items[extend];
+    }
+
+    //clone meta_info
+    for(var i in meta_info) {
+        meta_info[i] = _.cloneDeep(methods[i]);
     }
 
     //add item
@@ -357,6 +363,12 @@ ARTGEN._brushes = new Collection(baseBrush);
 //starts the collection of painters
 ARTGEN._painters = new Collection(basePainter);
 
+//meta information about brushes
+ARTGEN._info_brushes = {};
+
+//meta information about painters
+ARTGEN._info_painters = {};
+
 //logs messages
 ARTGEN.log = function(msg) {
     //console.log(msg);
@@ -370,7 +382,9 @@ ARTGEN.log = function(msg) {
  * @param {Object} methods Methods of the new brush
  */
 ARTGEN.addBrush = function(name, extend, method) {
-    this._brushes.add(name, extend, method);
+    //store meta information reference
+    this._info_brushes[name] = {};
+    this._brushes.add(name, extend, method, this._info_brushes[name]);
 };
 
 /* 
@@ -381,7 +395,13 @@ ARTGEN.addBrush = function(name, extend, method) {
  * @param {Object} methods Methods of the new painter
  */
 ARTGEN.addPainter = function(name, extend, method) {
-    this._painters.add(name, extend, method);
+
+    //store meta information reference
+    this._info_painters[name] = {
+        data_values: {},
+        options: {}
+    };
+    this._painters.add(name, extend, method, this._info_painters[name]);
 };
 
 /* 
