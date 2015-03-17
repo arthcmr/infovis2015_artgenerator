@@ -10,8 +10,9 @@ function Collection (base) {
  * @param {String} name Name of the new item
  * @param {String|Object} extend Name of item to extend from
  * @param {Object} methods Methods of the new item
+ * @param {Object} object for meta_information
  */
-Collection.prototype.add = function(name, extend, methods) {
+Collection.prototype.add = function(name, extend, methods, meta_info) {
     
     //start collection if not existing
     this._items = this._items || {};
@@ -23,6 +24,11 @@ Collection.prototype.add = function(name, extend, methods) {
         from = this._base;
     } else {
         from = this._items[extend];
+    }
+
+    //clone meta_info
+    for(var i in meta_info) {
+        meta_info[i] = (!_.isUndefined(methods[i])) ? _.cloneDeep(methods[i]) : meta_info[i];
     }
 
     //add item

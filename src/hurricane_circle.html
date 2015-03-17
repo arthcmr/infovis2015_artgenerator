@@ -36,11 +36,11 @@
         console.log("Starting...");
         resizeCanvas();
         setInterval(function() {
-            var data = {
-                silence: NCSOUND.getData(4)[0] || 0,
-                energy: NCSOUND.getData(7)[0] || 0,
-                energy2: NCSOUND.getData(9)[0] || 0
-            };
+            var data = [
+                NCSOUND.getData(4)[0] || 0,
+                NCSOUND.getData(7)[0] || 0,
+                NCSOUND.getData(9)[0] || 0
+            ];
             painter.data = data;
         }, 10);
     });
