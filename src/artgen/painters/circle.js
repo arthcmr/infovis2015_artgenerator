@@ -1,10 +1,31 @@
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
+
+    /* determine, in order, what the data values are used for */
+    data_values: [{
+        description: "used for the 1st and 3rd brushes",
+        options: ["rms", "energy","perceptualSharpness"]
+    }, {
+        description: "used for the 2nd and 5th brushes",
+        options: ["perceptualSharpness", "rms", "energy"]
+    }, {
+        description: "used for the 4th brush",
+        options: ["energy", "rms", "perceptualSharpness"]
+    }],
+
+    options: {
+        color: {
+            name: "Color",
+            description: "used for determine the color palette",
+            options: ["red", "blue", "purple", "monochromatic", "green", "orange", "gold", "*"]
+        }
+    },
+
     brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius/3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
+        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
     },
 
     paint: function(time, data) {
@@ -32,7 +53,7 @@ ARTGEN.addPainter('circle', {
         max_height = max_y - min_y;
         center_x = this.canvas.width / 2;
         center_y = this.canvas.height / 2,
-        length = flocks.length;
+            length = flocks.length;
 
         var time_var = (time - this.first_time) / 1000;
 
@@ -44,7 +65,7 @@ ARTGEN.addPainter('circle', {
         var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
 
         var targets = [];
-        for(var i=0; i<length; i++) {
+        for (var i = 0; i < length; i++) {
             var p = new Vector();
             var d = data[mappings[i]] || 0;
             p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
@@ -67,7 +88,11 @@ ARTGEN.addPainter('circle', {
                 return c;
             }
 
-            this.colors = formatColors([[6,43,104],[10,21,117],[8,95,127],[8,6,114],[4,71,99]]);
+            this.colors = formatColors(randomColor({
+                hue: this.options.color,
+                format: 'rgbArray',
+                count: 5
+            }));
 
             //initial positions and colors based on silence
             for (var i = 0; i < flocks.length; i++) {
@@ -93,11 +118,11 @@ ARTGEN.addPainter('circle', {
         // target_x2 -= (!data * max_width);
 
         for (var i = 0; i < flocks.length; i++) {
-            if(targets[i].x === zero_x && targets[i].y === zero_y) {
+            if (targets[i].x === zero_x && targets[i].y === zero_y) {
                 flocks[i].disable();
             } else {
                 flocks[i].enable();
-            } 
+            }
 
             flocks[i].setTarget(targets[i].x, targets[i].y);
             flocks[i].update();
