@@ -410,7 +410,7 @@ ARTGEN.addPainter = function(name, extend, method) {
 /* 
  * starts the art generator
  */
-ARTGEN.init = function(canvas_id, painter) {
+ARTGEN.init = function(canvas_id, painter, options) {
     this.log("Starting ARTGEN on", canvas_id);
 
     var instance = {};
@@ -424,7 +424,7 @@ ARTGEN.init = function(canvas_id, painter) {
     //get the painter from the collection and initialize it
     var p = this._painters.get(painter);
     instance.painter = new p();
-    instance.painter.init(instance._canvas, instance._ctx);
+    instance.painter.init(instance._canvas, instance._ctx, options);
     instance.data = [null];
 
     //browser animation
