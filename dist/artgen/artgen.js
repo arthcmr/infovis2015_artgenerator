@@ -23,8 +23,9 @@ function Collection (base) {
  * @param {String} name Name of the new item
  * @param {String|Object} extend Name of item to extend from
  * @param {Object} methods Methods of the new item
+ * @param {Object} object for meta_information
  */
-Collection.prototype.add = function(name, extend, methods) {
+Collection.prototype.add = function(name, extend, methods, meta_info) {
     
     //start collection if not existing
     this._items = this._items || {};
@@ -36,6 +37,11 @@ Collection.prototype.add = function(name, extend, methods) {
         from = this._base;
     } else {
         from = this._items[extend];
+    }
+
+    //clone meta_info
+    for(var i in meta_info) {
+        meta_info[i] = (!_.isUndefined(methods[i])) ? _.cloneDeep(methods[i]) : meta_info[i];
     }
 
     //add item
@@ -148,7 +154,7 @@ baseBrush.prototype.setPosition = function(x, y) {
  * @param {Object} canvas canvas object
  * @param {Object} ctx Canvas context
  */
-var basePainter = function () {};
+var basePainter = function() {};
 
 /* 
  * empty set of brushes
@@ -158,7 +164,7 @@ basePainter.prototype.brushes = [];
 /* 
  * initializes a painter
  */
-basePainter.prototype.init = function(canvas, ctx) {
+basePainter.prototype.init = function(canvas, ctx, options) {
     this.canvas = canvas;
     this.ctx = ctx;
     for (var i = 0; i < this.brushes.length; i++) {
@@ -166,6 +172,18 @@ basePainter.prototype.init = function(canvas, ctx) {
         this.brushes[i] = new brush();
         this.brushes[i].init(ctx);
     };
+
+    if (this.options) {
+        //compute defaults
+        var defaults = {};
+        _.forIn(this.options, function(value, key) {
+            defaults[key] = value.options[0];
+        });
+
+        options = (_.isPlainObject(options)) ? options : {};
+
+        this.options = _.extend(defaults, options);
+    }
 };
 
 /* 
@@ -345,6 +363,12 @@ ARTGEN._brushes = new Collection(baseBrush);
 //starts the collection of painters
 ARTGEN._painters = new Collection(basePainter);
 
+//meta information about brushes
+ARTGEN.info_brushes = {};
+
+//meta information about painters
+ARTGEN.info_painters = {};
+
 //logs messages
 ARTGEN.log = function(msg) {
     //console.log(msg);
@@ -358,7 +382,9 @@ ARTGEN.log = function(msg) {
  * @param {Object} methods Methods of the new brush
  */
 ARTGEN.addBrush = function(name, extend, method) {
-    this._brushes.add(name, extend, method);
+    //store meta information reference
+    this.info_brushes[name] = {};
+    this._brushes.add(name, extend, method, this.info_brushes[name]);
 };
 
 /* 
@@ -369,13 +395,22 @@ ARTGEN.addBrush = function(name, extend, method) {
  * @param {Object} methods Methods of the new painter
  */
 ARTGEN.addPainter = function(name, extend, method) {
-    this._painters.add(name, extend, method);
+
+    //store meta information reference
+    this.info_painters[name] = {
+        title: "",
+        description: "",
+        tags: [],
+        data_values: {},
+        options: {}
+    };
+    this._painters.add(name, extend, method, this.info_painters[name]);
 };
 
 /* 
  * starts the art generator
  */
-ARTGEN.init = function(canvas_id, painter) {
+ARTGEN.init = function(canvas_id, painter, options) {
     this.log("Starting ARTGEN on", canvas_id);
 
     var instance = {};
@@ -389,7 +424,7 @@ ARTGEN.init = function(canvas_id, painter) {
     //get the painter from the collection and initialize it
     var p = this._painters.get(painter);
     instance.painter = new p();
-    instance.painter.init(instance._canvas, instance._ctx);
+    instance.painter.init(instance._canvas, instance._ctx, options);
     instance.data = [null];
 
     //browser animation
@@ -2631,50 +2666,334 @@ ARTGEN.addBrush('thin_marker', {
 ARTGEN.addBrush('thunderbolt', {
     init: function() {
 		
-		this.generation1 = 200;
-		this.minThickness = 1;
-		this.minOpacity = 0.04;
-		this.minOpacityBackground = 0.0035;
-		this.birthRate = 0.06;
+		this.generation1perBolt = 20;// Times the number of beams in bolts[]
+		this.boltsNb = 10;
+		this.beamOpacity = 0.05;
+		this.fallingParticlesOpacity = 0.025;
+		this.birthRate = 2.0;
+		this.deathRateBasis = 1.6;
+		this.spokenRateToDeathRate = 0.1;
+		this.energyToPositronRadiusRate = 5;// Max rad will be 5
+		this.inverseOfStickiness = 0.02;
+		this.minAngleDeg = -90;
+		this.maxAngleDeg = 90;
 		
-		this.air = [];
-		this.falling = [];
-		this.gravity = 0.02;
+		this.bolts = [];// Will contain arrays
+		this.falling = [];// Will contain arrays
+		this.boltsNb;
 		
 		/** Delayers **/
+		// Only for spoken rate
 		this.silenceCounter = 0;
 		this.speakingCounter = 0;
 		this.silenceCountMax = 1;
 		this.speakingCountMax = 3;
+		// Required for expressiveness and energy as well if real data
 		
-		/** Repulsion **/
-		this.repulsion = 0;
-		this.minRep = 0;
-		this.maxRep = 50;
-		this.maxRepScale = 30;//px
-		this.minRspeed = -3;
-		this.maxRspeed = 3;
+		/** spokenRate **/
+		this.spokenRate = 0;
+		this.minSpokenRate = 0;
+		this.maxSpokenRate = 50;
 		
 		/** Expressiveness **/
 		this.expressiveness = 0.5;
-		this.expBuffer = [];
-		this.expBufferSize = 50;
-		
 		this.expCounter = 0;
 		this.expressivenessVar = 500;
 		
-		/** Positron **/
-		this.positronX;
-		this.positronY;
-		this.positronSpeedX;
-		this.positronSpeedY;
-		this.positronRad;
-		this.expressivenessInfluence = 0.01;
-		this.expressivenessThreshold = 0.5;
+		/** Energy **/
+		this.energy = .5;
+		this.energyCounter = 0;
+		this.energyVar = 500;
+		
+		/** Positrons **/
+		this.positrons = [];
+		
+		this.splitThisBolt = 0;
 
     },
     update: function(canvas, ctx, data) {
-		if (typeof data == "undefined" || data[0] == null) {
+		// Plugged on channel 4 with silence data, 0 or 1
+		if (typeof data == "undefined" || data[0] == null || data == null) {
+			return;
+		}
+		if (data == 0) { this.silenceCounter++; }
+		else if (data == 1) { this.speakingCounter++; }
+		
+		if (this.silenceCounter >= this.silenceCountMax) {
+			this.silenceCounter = 0;
+			this.spokenRate--;
+			if (this.spokenRate <= this.minSpokenRate) { this.spokenRate = this.minSpokenRate; }
+		}
+		if (this.speakingCounter >= this.speakingCountMax) {
+			this.speakingCounter = 0;
+			this.spokenRate++;
+			if (this.spokenRate >= this.maxSpokenRate) { this.spokenRate = this.maxSpokenRate; }
+		}
+		
+		//if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
+		//this.expBuffer.push(parseFloat(data[1]));
+		this.simulateExpressiveness();
+		this.simulateEnergy();
+		//this.expBuffer.push(this.expressiveness);
+		
+		var births = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
+		var deaths = Math.floor(Math.random()*(1 + this.deathRateBasis + this.spokenRate * this.spokenRateToDeathRate));// 1 in ?
+		
+		// Life! :D
+		this.feed(births);
+		
+		// Kill particles only if there are some left...
+		if (this.bolts[0].length > deaths) { this.detach(deaths); }
+		if (this.spokenRate >= this.maxSpokenRate / 3) {
+			// Detach early (1/3) otherwise too few particles in bolts afterwards
+			this.splitBolt(this.splitThisBolt);
+			this.splitThisBolt++;
+			this.splitThisBolt %= this.boltsNb;
+			// Back to 0
+			this.spokenRate = this.minSpokenRate;
+		}
+		
+		this.movePositrons(canvas);
+		this.moveElectrons(canvas); 
+    },
+    draw: function(ctx) {
+        this.drawElectrons(ctx);
+    },
+    start: function(ctx, canvas, extraArgs) {
+		// For the brush thunderbolt, extraArgs == [{Number}, {Number}, {String}]
+		ctx.rect(0, 0, canvas.width, canvas.height);
+		ctx.fillStyle = "black";
+		ctx.fill();
+		
+		var xStart = extraArgs[0] * canvas.width;
+		var yStart = extraArgs[1] * canvas.height;
+		var way = extraArgs[2];
+		
+		for (var i = 0; i < this.boltsNb; i++) {
+			this.bolts.push([]);
+			this.falling.push([]);
+			this.positrons.push({
+				x: xStart,
+				y: yStart,
+				xSpeed: null,
+				ySpeed: null,
+				speed: 0.5,
+				r: 5,
+				way: way,
+				angleOffset: 0
+			});
+		}
+		
+		this.feed(this.generation1perBolt);
+    },
+	simulateExpressiveness: function() {
+		this.expCounter++;
+		this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
+		
+	},
+	simulateEnergy: function() {
+		this.energyCounter++;
+		this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
+	},
+	addElectron: function(boltKey, x, y, xSpeed, ySpeed) {
+		this.bolts[boltKey].push({
+			x: x,
+			xLast: x,
+			y: y,
+			yLast: y,
+			xSpeed: xSpeed,
+			ySpeed: ySpeed,
+			yDist: 0
+		});
+	},
+	movePositrons: function(canvas) {
+		for (var key1 = 0; key1 < this.positrons.length; key1++) {
+			var positron = this.positrons[key1];
+			// Angle in desired range. If expressiveness remains around 0.5, the bolt with hore an horizontal overall motion
+			var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
+			
+			// Left or right? Can be improved, using directly angle launch from painter parameter
+			positronSpeedAng += (positron.way == "right" ? 0 : Math.PI);
+			
+			positron.xSpeed = positron.speed * Math.cos(positronSpeedAng); 
+			positron.ySpeed = positron.speed * Math.sin(positronSpeedAng); 
+			positron.x += positron.xSpeed;
+			positron.y += positron.ySpeed;
+			positron.r = this.energyToPositronRadiusRate * this.energy;
+		}
+	},
+	moveElectrons: function(canvas) {
+	
+		// In bolts
+		for (boltKey in this.bolts) {
+			var positron = this.positrons[boltKey];
+			for (key in this.bolts[boltKey]) {
+				var electron = this.bolts[boltKey][key];
+				electron.xLast = electron.x;
+				electron.yLast = electron.y;
+				var distToPositronCenter = Math.sqrt(Math.pow(electron.x - positron.x, 2) + Math.pow(electron.y - positron.y, 2));
+				// Spread the bolts electrons in the whole positron radius effect
+				electron.xSpeed = positron.xSpeed; //+ 0.01 * Math.random() * Math.max(this.positronRad - distToPositronCenter, 0);
+				electron.ySpeed = positron.ySpeed; //+ 0.01 * Math.random() * Math.max(this.positronRad - distToPositronCenter, 0);
+				electron.x += electron.xSpeed;
+				electron.y += electron.ySpeed;
+				var newDistToPositronCenter = Math.sqrt(Math.pow(electron.x - positron.x, 2) + Math.pow(electron.y - positron.y, 2));
+				var toReduceBy = newDistToPositronCenter / positron.r;
+				electron.x  = positron.x + (electron.x - positron.x)/toReduceBy;
+				electron.y  = positron.y + (electron.y - positron.y)/toReduceBy;
+				// Don't forget last positions, otherwise ugly lines
+				electron.xLast  = positron.x + (electron.xLast - positron.x)/toReduceBy;
+				electron.yLast  = positron.y + (electron.yLast - positron.y)/toReduceBy;
+				
+			}
+		}
+		
+		// In falling
+		for (key2 in this.falling) {
+			var positron = this.positrons[key2];
+			for (key3 in this.falling[key2]) {
+				var electron = this.falling[key2][key3];
+				
+				electron.xLast = electron.x;
+				electron.yLast = electron.y;
+				
+				// Extra force so that the still follow the shape of the main beam
+				//var attractor = (electron.y > this.positronY ? electron.y - this.positronY : 0);
+				var attractor = (electron.y - positron.y) / 100;
+				//electron.ySpeed += this.positronSpeedY / 10;
+				
+				// "Gravity"
+				electron.ySpeed += this.inverseOfStickiness * attractor;
+				
+				// Motion
+				electron.xSpeed = positron.xSpeed;
+				electron.x += electron.xSpeed;
+				//electron.y += electron.ySpeed;
+				//electron.yDist *= 1 + this.inverseOfStickiness;
+				electron.yDist += electron.ySpeed;
+				
+				electron.y = positron.y + electron.yDist;
+				
+				// Kill electrons that reach the edges of the canvas
+				if (electron.x > canvas.width || electron.y > canvas.height || electron.x < 0 || electron.y < 0) {
+					this.falling[key2].splice(key3, 1);
+				}
+			}
+		}
+		
+	},
+	drawElectrons: function(ctx) {
+		// In bolts
+		for (key in this.bolts) {
+			for (key2 in this.bolts[key]) {
+				var electron = this.bolts[key][key2];
+				ctx.strokeStyle = "rgba(255, 255, 255, " + this.beamOpacity + ")";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(electron.xLast, electron.yLast);
+				ctx.lineTo(electron.x, electron.y);
+				ctx.stroke();
+			}
+		}
+		
+		// In falling
+		for (key3 in this.falling) {
+			for (key4 in this.falling[key3]) {
+				var electron = this.falling[key3][key4];
+				ctx.strokeStyle = "rgba(255, 255, 255, " + this.fallingParticlesOpacity + ")";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(electron.xLast, electron.yLast);
+				ctx.lineTo(electron.x, electron.y);
+				ctx.stroke();
+			}
+		}
+	},
+	feed: function(howMany) {
+		for (key in this.bolts) {
+			var positron = this.positrons[key];
+			for (var i = 0; i < howMany; i++) {
+				var angle = 2 * Math.PI * Math.random();
+				var r = positron.r;
+				// Particles added at the limit of the positron's area (its radius)
+				this.addElectron(key, positron.x + r * Math.cos(angle), positron.y + r * Math.sin(angle), positron.xSpeed, positron.ySpeed);
+			}
+		}
+	},
+	detach: function(howMany) {
+		for (key in this.bolts) {
+			for (var i = 0; i < howMany; i++) {
+				this.falling[key].push(this.bolts[key].shift());
+			}
+		}
+	},
+	splitBolt: function(boltKey) {
+		// Preserve symmetry
+		var multip = (this.positrons[boltKey].way == "right" ? 1 : -1);
+		var tearApartBy = 1/8 * Math.PI * (this.positrons[boltKey].ySpeed > 0 ? multip : -multip);
+		this.positrons[boltKey].angleOffset += tearApartBy;
+	}
+});
+ARTGEN.addBrush('thunderboltfailure', {
+    init: function() {
+		
+		this.generation1 = 350;
+		this.beamOpacity = 0.1;
+		this.fallingParticlesOpacity = 0.05;
+		this.birthRate = 2.4;
+		this.deathRateBasis = 1.6;
+		this.spokenRateToDeathRate = 0.1;
+		this.energyToPositronRadiusRate = 10;
+		this.inverseOfStickiness = 0.002;
+		this.minAngleDeg = -90;
+		this.maxAngleDeg = 90;
+		
+		/** Particle arrays **/
+		this.bolts = [];
+		this.bolts.push([]);
+		this.lightfalls = [];
+		this.lightfalls.push([]);
+		
+		/** Delayers **/
+		// Only for spoken rate
+		this.silenceCounter = 0;
+		this.speakingCounter = 0;
+		this.silenceCountMax = 1;
+		this.speakingCountMax = 3;
+		// Required for expressiveness and energy as well if real data
+		
+		/** Spoken rate **/
+		this.spokenRate = 25;
+		this.minSpokenRate = 0;
+		this.maxSpokenRate = 50;
+		
+		/** Expressiveness **/
+		this.expressiveness = 0.5;
+		this.expCounter = 0;
+		this.expressivenessVar = 500;
+		
+		/** Energy **/
+		this.energy = .5;
+		this.energyCounter = 0;
+		this.energyVar = 1000;
+		
+		/** Positrons **/
+		this.positrons = [
+			{
+				x: null,
+				y: null,
+				xSpeed: null,
+				ySpeed: null,
+				r: null
+			}
+		];
+		
+		this.splitOnce = 1;
+    },
+    update: function(canvas, ctx, data) {
+		
+		// Plugged on channel 4 with silence data, 0 or 1
+		if (typeof data == "undefined" || data[0] == null || data == null) {
 			return;
 		}
 		if (data[0] == 0) { this.silenceCounter++; }
@@ -2682,144 +3001,243 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		if (this.silenceCounter >= this.silenceCountMax) {
 			this.silenceCounter = 0;
-			this.repulsion--;
-			if (this.repulsion <= this.minRep) { this.repulsion = this.minRep; }
+			this.spokenRate--;
+			if (this.spokenRate <= this.minSpokenRate) { this.spokenRate = this.minSpokenRate; }
 		}
 		if (this.speakingCounter >= this.speakingCountMax) {
 			this.speakingCounter = 0;
-			this.repulsion++;
-			if (this.repulsion >= this.maxRep) { this.repulsion = this.maxRep; }
+			this.spokenRate++;
+			if (this.spokenRate >= this.maxSpokenRate) { this.spokenRate = this.maxSpokenRate; }
 		}
 		
-		if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
+		//if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
 		//this.expBuffer.push(parseFloat(data[1]));
 		this.simulateExpressiveness();
-		this.expBuffer.push(this.expressiveness);
+		this.simulateEnergy();
+		//this.expBuffer.push(this.expressiveness);
 		
 		var births = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
-		var deaths = Math.floor(Math.random()*(1 + this.repulsion/150));// 1 in ?
+		var deaths = Math.floor(Math.random()*(1 + this.deathRateBasis + this.spokenRate * this.spokenRateToDeathRate));// 1 in ?
 		
+		// Life! :D
 		this.feed(births);
-		if (this.air.length > deaths) { this.detach(deaths); }
 		
-		this.movePositron(canvas);
+		// Kill particles only if there are some left...
+		if (this.bolts[0].length > deaths) { this.detach(deaths); }
+		if (this.spokenRate == this.maxSpokenRate && this.splitOnce == 1) {
+			this.splitBolt(0);
+			this.splitOnce = 0;
+		}
+		this.movePositrons(canvas);
 		this.moveElectrons(canvas);
-		/*console.log("Positron", this.positronX);
-		console.log("buffer", this.expBuffer.length);
-		console.log("air", this.air.length);
-		console.log("falling", this.falling.length);*/
 		
     },
     draw: function(ctx) {
         this.drawElectrons(ctx);
     },
-    start: function(ctx, canvas,data) {
+    start: function(ctx, canvas, extraArgs) {
+		// For the brush thunderbolt, extraArgs = [{Number}]
 		ctx.rect(0, 0, canvas.width, canvas.height);
 		ctx.fillStyle = "black";
 		ctx.fill();
 		
-		this.positronX = 0;
-		this.positronY = canvas.height/2;
-		this.positronSpeedX = 0.5;
-		this.positronSpeedY = 0;
-		this.positronRad = 10;
+		this.positrons[0].x = 0;
+		this.positrons[0].y = canvas.height * extraArgs[0];
+		this.positrons[0].xSpeed = 0;
+		this.positrons[0].ySpeed = 0;
+		this.positrons[0].speed = 0.5;
+		this.positrons[0].r = 5;
 		
 		this.feed(this.generation1);
     },
 	simulateExpressiveness: function() {
 		this.expCounter++;
-		// Full range
-		this.expressiveness = 0.5 + 0.4*Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar)*Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
+		this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
 		
 	},
-	addElectron: function(x, y, xSpeed, ySpeed) {
-		this.air.push({
+	simulateEnergy: function() {
+		this.energyCounter++;
+		this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
+	},
+	addElectron: function(boltKey, x, y, xSpeed, ySpeed) {
+		this.bolts[boltKey].push({
 			x: x,
 			xLast: x,
 			y: y,
 			yLast: y,
 			xSpeed: xSpeed,
-			ySpeed: ySpeed
+			ySpeed: ySpeed,
+			yDist: 0
 		});
 	},
-	movePositron: function(canvas) {
-		var expAvg = 0;
-		for (key in this.expBuffer) {
-			expAvg += this.expBuffer[key];
+	movePositrons: function(canvas) {
+		for (var key1 = 0; key1 < this.positrons.length; key1++) {
+			var positron = this.positrons[key1];
+			var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness );
+			
+			positron.xSpeed = positron.speed * Math.cos(positronSpeedAng); 
+			positron.ySpeed = positron.speed * Math.sin(positronSpeedAng); 
+			positron.x += positron.xSpeed;
+			positron.y += positron.ySpeed;
+			positron.r = this.energyToPositronRadiusRate * this.energy;
 		}
-		expAvg /= this.expBuffer.length;
-		this.positronSpeedY += this.expressivenessInfluence * (expAvg - this.expressivenessThreshold);
-		this.positronX += this.positronSpeedX;
-		this.positronY += this.positronSpeedY;
 	},
 	moveElectrons: function(canvas) {
-	
-		// In air
-		for (key in this.air) {
-			var electron = this.air[key];
-			electron.xLast = electron.x;
-			electron.yLast = electron.y;
-			electron.x += this.positronSpeedX;
-			electron.y += this.positronSpeedY;
-			electron.xSpeed = this.positronSpeedX;
-			electron.ySpeed = this.positronSpeedY;
+		
+		// In bolts
+		for (var boltKey = 0; boltKey < this.bolts.length; boltKey++) {
+		
+			var bolt = this.bolts[boltKey];
+			var positron = this.positrons[boltKey];
+			
+			for (var key2 = 0; key2 < bolt.length; key2++) {
+				var electron = bolt[key2];
+				electron.xLast = electron.x;
+				electron.yLast = electron.y;
+				
+				// Spread the air electrons in the whole positron radius effect
+				electron.xSpeed = positron.xSpeed;
+				electron.ySpeed = positron.ySpeed;
+				electron.x += electron.xSpeed;
+				electron.y += electron.ySpeed;
+				
+				// Keep it in the positron's area defined by positron current radius
+				var newDistToPositronCenter = Math.sqrt(Math.pow(electron.x - positron.x, 2) + Math.pow(electron.y - positron.y, 2));
+				var toReduceBy = newDistToPositronCenter / positron.r;
+				electron.x  = positron.x + (electron.x - positron.x)/toReduceBy;
+				electron.y  = positron.y + (electron.y - positron.y)/toReduceBy;
+				
+				// Don't forget last positions, otherwise ugly lines
+				electron.xLast  = positron.x + (electron.xLast - positron.x)/toReduceBy;
+				electron.yLast  = positron.y + (electron.yLast - positron.y)/toReduceBy;
+				
+			}
 		}
 		
-		// In falling
-		for (key2 in this.falling) {
-			var electron = this.falling[key2];
-			
-			electron.xLast = electron.x;
-			electron.yLast = electron.y;
-			
-			// Gravity
-			electron.ySpeed += this.gravity;
-			electron.x += electron.xSpeed;
-			electron.y += electron.ySpeed;
-			
-			// Kill electrons that reach the edges of the canvas
-			if (electron.x > canvas.width || electron.y > canvas.height || electron.x < 0 || electron.y < 0) {
-				this.falling.splice(key2, 1);
-			}
-			
+		// In lightfalls
+		for (var key3 = 0; key3 < this.lightfalls.length; key3++) {
+			var self = this;
+			(function(key3clo) {
+				var positron = self.positrons[key3];
+				for (var key4 = 0; key4 < self.lightfalls[key3clo].length; key4++) {
+					(function(key4clo) {
+						var electron = self.lightfalls[key3clo][key4clo];
+						
+						electron.xLast = electron.x;
+						electron.yLast = electron.y;
+						
+						// Extra force so that they still follow the shape of the main beam
+						var attractor = (electron.y - positron.y) / 100;
+						
+						// "Gravity", the farther the particle from the beam, the higher the 'repulsion'
+						electron.ySpeed += self.inverseOfStickiness * attractor;
+						
+						// Motion
+						electron.xSpeed = positron.xSpeed;
+						electron.x += electron.xSpeed;
+						
+						// Intermediate y coordinate, will always be translated by the positron's y coordinate
+						electron.yDist += electron.ySpeed;
+						electron.y = positron.y + electron.yDist;
+						
+						// Kill electrons that reach the edges of the canvas
+						if (electron.x > canvas.width || electron.y > canvas.height || electron.x < 0 || electron.y < 0) {
+							self.lightfalls[key3clo].splice(key4clo, 1);
+						}
+					})(key4);
+				}
+			})(key3);
 		}
 		
 	},
 	drawElectrons: function(ctx) {
-		// In air
-		for (key in this.air) {
-			var electron = this.air[key];
-			ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-			ctx.lineWidth = 1;
-			ctx.beginPath();
-			ctx.moveTo(electron.xLast, electron.yLast);
-			ctx.lineTo(electron.x, electron.y);
-			ctx.stroke();
+		// In bolts
+		for (var boltKey2 = 0; boltKey2 < this.bolts.length; boltKey2++) {
+			var bolt = this.bolts[boltKey2];
+			for (var key5 = 0; key5 < bolt.length; key5++) {
+				var electron = bolt[key5];
+				ctx.strokeStyle = "rgba(255, 255, 255, " + this.beamOpacity + ")";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(electron.xLast, electron.yLast);
+				ctx.lineTo(electron.x, electron.y);
+				ctx.stroke();
+			}
 		}
 		
-		// In falling
-		for (key2 in this.falling) {
-			var electron = this.falling[key2];
-			ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
-			ctx.lineWidth = 2;
-			ctx.beginPath();
-			ctx.moveTo(electron.xLast, electron.yLast);
-			ctx.lineTo(electron.x, electron.y);
-			ctx.stroke();
+		// In lightfalls
+		for (var key6 = 0; key6 < this.lightfalls.length; key6++) {
+			var fall = this.lightfalls[key6];
+			for (var key7 = 0; key7 < fall.length; key7++) {
+				var electron = fall[key7];
+				ctx.strokeStyle = "rgba(255, 255, 255, " + this.fallingParticlesOpacity + ")";
+				ctx.lineWidth = 1;
+				ctx.beginPath();
+				ctx.moveTo(electron.xLast, electron.yLast);
+				ctx.lineTo(electron.x, electron.y);
+				ctx.stroke();
+			}
 		}
 	},
 	feed: function(howMany) {
-		for (var i = 0; i < howMany; i++) {
-			var angle = 2 * Math.PI * Math.random();
-			var r = this.positronRad;
-			this.addElectron(this.positronX + r * Math.cos(angle), this.positronY + r * Math.sin(angle), this.positronSpeedX, this.positronSpeedY);
+		for (var boltKey3 = 0; boltKey3 < this.bolts.length; boltKey3++) {
+			var bolt = this.bolts[boltKey3];
+			var positron = this.positrons[boltKey3];
+			for (var i = 0; i < howMany; i++) {
+				var angle = 2 * Math.PI * Math.random();
+				var r = positron.r;
+				// Particles added at the limit of the positron's area (its radius)
+				this.addElectron(boltKey3, positron.x + r * Math.cos(angle), positron.y + r * Math.sin(angle), positron.xSpeed, positron.ySpeed);
+			}
 		}
 	},
 	detach: function(howMany) {
-		for (var i = 0; i < howMany; i++) {
-			this.falling.push(this.air.shift());
+		var self = this;
+		for (var i = 0; i < this.bolts.length; i++) {
+			(function(iClo) {
+				for (var j = 0; j < howMany; j++) {
+					self.lightfalls[iClo].push(self.bolts[iClo].shift());
+				}
+			})(i);
 		}
 	},
+	splitBolt: function(boltKey) {
+		
+		var positron = this.positrons[boltKey];
+		
+		// Create new bolt, new fall and new positron
+		this.bolts.push([]);
+		this.lightfalls.push([]);
+		this.positrons.push({
+			x: positron.x,
+			y: positron.y + 30,
+			xSpeed: positron.xSpeed,
+			ySpeed: positron.ySpeed,
+			r: positron.r
+		});
+		
+		// Fill them with half the content of the boltKey'th bolt and fall
+		for (var i = 0; i < Math.floor(this.bolts[boltKey].length / 2); i++) {
+			this.bolts[this.bolts.length - 1].push(this.bolts[boltKey].shift());
+		}
+		for (var j = 0; j < Math.floor(this.lightfalls[boltKey].length / 2); j++) {
+			var what = {};
+			jQuery.extend(true, what, this.lightfalls[boltKey].shift() );
+			console.log(what);
+			/*this.lightfalls[this.lightfalls.length - 1].push({
+				x: what.x,
+				xLast: what.xLast,
+				y: what.y,
+				yLast: what.yLast,
+				xSpeed: what.xSpeed,
+				ySpeed: what.ySpeed,
+				yDist: what.yDist
+			});*/
+			this.lightfalls[this.lightfalls.length - 1].push(what);
+			console.log(this.lightfalls[this.lightfalls.length - 1][this.lightfalls[this.lightfalls.length - 1].length - 1]);// WTF!?
+			//this.lightfalls[boltKey].push( jQuery.extend({}, this.lightfalls[boltKey].shift()) );
+		}
+	}
 });
 ARTGEN.addBrush('transient', {
     init: function() {
@@ -3246,11 +3664,42 @@ ARTGEN.addPainter('astronaut', {
 })
 //gogh is an example of painter that paints only monochromatic colors
 ARTGEN.addPainter('circle', {
+
+    /* =============== META INFORMATION ================= */
+
+    title: "Circle",
+    description: "The ephemeral nature of speech represented through deformed rings",
+    tags: ["energy", "color", "expressiveness"],
+
+    // determine, in order, what the data values are used for
+    data_values: [{
+        description: "used for the 1st and 3rd brushes",
+        options: ["rms", "energy","perceptualSharpness"]
+    }, {
+        description: "used for the 2nd and 5th brushes",
+        options: ["perceptualSharpness", "rms", "energy"]
+    }, {
+        description: "used for the 4th brush",
+        options: ["energy", "rms", "perceptualSharpness"]
+    }],
+
+    //extra visual options
+    options: {
+        color: {
+            name: "Color",
+            description: "used for determine the color palette",
+            options: ["red", "blue", "purple", "monochromatic", "green", "orange", "gold", "*"]
+        }
+    },
+
+
+    /* =============== IMPLEMENTATION ================= */
+
     brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius/3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
+        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 50 * (order * 0.5 + 1)) * 3) + reference;
     },
 
     paint: function(time, data) {
@@ -3278,7 +3727,7 @@ ARTGEN.addPainter('circle', {
         max_height = max_y - min_y;
         center_x = this.canvas.width / 2;
         center_y = this.canvas.height / 2,
-        length = flocks.length;
+            length = flocks.length;
 
         var time_var = (time - this.first_time) / 1000;
 
@@ -3286,13 +3735,11 @@ ARTGEN.addPainter('circle', {
         zero_x = this._calcPos('cos', time_var, 0, 0, radius, center_x);
         zero_y = this._calcPos('sin', time_var, 0, 0, radius, center_y);
 
-        //map brushes to values
-        var mappings = ['silence', 'energy', 'silence', 'energy2', 'energy'];
 
         var targets = [];
-        for(var i=0; i<length; i++) {
+        for (var i = 0; i < length; i++) {
             var p = new Vector();
-            var d = data[mappings[i]] || 0;
+            var d = data[i] || 0;
             p.x = this._calcPos('cos', time_var, d, i, radius, center_x);
             p.y = this._calcPos('sin', time_var, d, i, radius, center_y);
             targets.push(p);
@@ -3313,7 +3760,11 @@ ARTGEN.addPainter('circle', {
                 return c;
             }
 
-            this.colors = formatColors([[6,43,104],[10,21,117],[8,95,127],[8,6,114],[4,71,99]]);
+            this.colors = formatColors(randomColor({
+                hue: this.options.color,
+                format: 'rgbArray',
+                count: 5
+            }));
 
             //initial positions and colors based on silence
             for (var i = 0; i < flocks.length; i++) {
@@ -3339,11 +3790,11 @@ ARTGEN.addPainter('circle', {
         // target_x2 -= (!data * max_width);
 
         for (var i = 0; i < flocks.length; i++) {
-            if(targets[i].x === zero_x && targets[i].y === zero_y) {
+            if (targets[i].x === zero_x && targets[i].y === zero_y) {
                 flocks[i].disable();
             } else {
                 flocks[i].enable();
-            } 
+            }
 
             flocks[i].setTarget(targets[i].x, targets[i].y);
             flocks[i].update();
@@ -3663,16 +4114,19 @@ ARTGEN.addPainter('pollock', {
     }
 })
 ARTGEN.addPainter('zeus', {
-	brushes: ['thunderbolt'],
-    paint: function(time, data){
-    	var moon = this.getBrush(0);
-    	if(!this._instantiated){
-    		moon.setColor(randomColor());
-    		moon.start(this.ctx,this.canvas);
+	brushes: ['thunderbolt', 'thunderbolt'],
+    paint: function(time, data) {
+    	var bolt = this.getBrush(0);
+    	var bolt2 = this.getBrush(1);
+    	if(!this._instantiated) {
+    		bolt.start(this.ctx, this.canvas, [0, 1/2, "right"]);
+    		bolt2.start(this.ctx, this.canvas, [1, 1/2, "left"]);
     		this._instantiated = true;
     	}
-    	moon.update(this.canvas,this.ctx,data);
-    	moon.draw(this.ctx);
+    	bolt.update(this.canvas, this.ctx, data);
+    	bolt.draw(this.ctx);
+		bolt2.update(this.canvas, this.ctx, data);
+    	bolt2.draw(this.ctx);
     }
 })
 	return ARTGEN;
