@@ -1,5 +1,18 @@
+html, body {
+	margin: 0;
+	padding: 0;
+}
 .visualization {
-	width: 800px;
-	height: 600px;
-	border: 1px solid #cccccc;
+	display:block;
+}
+
+#endButton {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+}
+#endButton > input {
+	padding: 20px;
+	display: block;
+	margin-top: 20px;
 }

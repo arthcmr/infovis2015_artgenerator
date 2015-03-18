@@ -1,0 +1,285 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Project</title>
+    <link href="vendor/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="assets/styles/main.css">
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+</head>
+
+<body>
+    <canvas id="visualization" class="visualization"></canvas>
+    <img id="canvasImg"/>
+    <!-- <canvas id="visualization2" class="visualization"></canvas> -->
+
+    <button id="endButton" class="btn btn-default" data-toggle="modal" data-target="#myModal">End Drawing</button>
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">End Drawing</h4>
+        </div>
+        <div class="modal-body">
+            Are you sure you want to end drawing ? 
+            <hr/>
+            <button data-dismiss="modal" aria-label="Close" type="button" id="getValuesButton" class="btn btn-info" onclick="getValues()" data-toggle="modal" data-target="#myModalStatistics">Get Values</button> 
+
+            <a id="myLink" href="statistics.html" target="_blank">Get Statistics</a>
+
+            <a type="button" id="download" class="btn btn-info">Save as PNG</a>
+
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModalStatistics" tabindex="-1" role="dialog" aria-labelledby="myModalStatistics" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Statistics</h4>
+    </div>
+    <div class="modal-body">
+        Values
+        <hr/>
+
+        <table>
+            <tr>
+                <p> Speech to silence ratio: </p>
+            </tr>
+            <tr>
+                <td>
+                    <h3> Intensity </h3> <!-- chanel 7-->
+                    <span id='visualization2'></span>
+                </td>
+                <td>
+                    <button id="Zoom" onclick="zoom()">Zoom</button>
+                    <td>
+                    </tr>
+                    <tr>
+                        <td align="center"> 
+                            <button id="Prev" onclick="previous()"></button>
+                            <button id="Next" onclick="next()"></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <h3> Level of emotion </h3>  <!-- chanel 9-->
+                            <span id='visualization1'></span>
+                        </td>
+                        <td>
+                            <button id="Zoom1" onclick="zoom1()">Zoom</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center">
+                            <button id="Prev1" onclick="previous1()"></button>
+                            <button id="Next1" onclick="next1()"></button>
+
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="vendor/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="vendor/lodash/lodash.min.js"></script>
+<script type="text/javascript" src="vendor/randomcolor/randomColor.js"></script>
+<script type="text/javascript" src="artgen/artgen.js"></script>
+<script type="text/javascript" src="ncsound/ncsound.js"></script>
+<script src="vendor/bootstrap/dist/js/bootstrap.js"></script>
+<script type="text/javascript">
+    //make canvas full screen
+
+    var highGuy = ARTGEN.init("visualization", "ondrugs");
+
+    var canvas = document.getElementById('visualization');
+    // resize the canvas to fill browser window dynamically
+    window.addEventListener('resize', resizeCanvas, false);
+
+    function resizeCanvas() {
+        highGuy._canvas.width = window.innerWidth;
+        highGuy._canvas.height = window.innerHeight;
+        highGuy.stop();
+        highGuy.paint();
+    }
+
+    function getValues(){
+        $(document).ready(function(){
+            $("getValuesButton").click(function(){
+                $("myModal").attr("aria-hidden", "false");
+            });
+        });
+        var i=NCSOUND.getIntensity();
+       // window.alert("Intensity is: " + i[0]);
+       // window.alert("Emotion is: " + NCSOUND.getT());
+   }
+
+    //ScreenShot
+    function downloadCanvas(link, canvasId, filename) {
+        link.href = document.getElementById(canvasId).toDataURL();
+        link.download = filename;
+    }
+
+    document.getElementById('download').addEventListener('click', function() {
+        downloadCanvas(this, "visualization", 'screenshot.png');
+    }, false);
+
+
+    NCSOUND.startMikeStream(function() {
+        console.log("Starting...");
+        resizeCanvas();
+        setInterval(function() {
+            //data= NCSOUND.getData(4)[0];
+            data= NCSOUND.getData(8);
+            highGuy.data = data;
+        }, 25);
+    });
+
+    </script>
+
+    <script type="text/javascript">
+
+    google.load("visualization", '1', {packages:['corechart']});
+//google.load("visualization", '1', {packages:['corechart']});
+google.setOnLoadCallback(drawChart);
+
+var options = {
+  width: 400,
+  height: 240,
+  animation: {
+    duration: 1000,
+    easing: 'in'
+},
+legend:{
+    position: 'none'
+},
+hAxis: {viewWindow: {min:0, max:5}}
+};
+
+var options1 = {
+  width: 400,
+  height: 240,
+  legend:{
+    position: 'none'
+},
+animation: {
+    duration: 1000,
+    easing: 'in'
+},
+hAxis: {viewWindow: {min:0, max:5}}
+};
+var chart;
+var data;
+var chart1;
+var data1;
+var MAX=10;
+var zoomed = false;
+var zoomed1 = false;
+var d=[];
+var d1=[];
+for (var i = 0; i < MAX; ++i) {
+    d[i]=[i.toString(), Math.floor(Math.random() * 100)];
+    d1[i]=[i.toString(), Math.floor(Math.random() * 100)];
+}
+  //var prevButton,nextButton,changeZoomButton;
+
+  function drawChart(){
+      chart = new google.visualization.SteppedAreaChart(
+          document.getElementById('visualization2'));
+      data = new google.visualization.DataTable();
+      data.addColumn('string', 'x');
+      data.addColumn('number', 'y');
+      
+      chart1 = new google.visualization.SteppedAreaChart(
+          document.getElementById('visualization1'));
+      data1 = new google.visualization.DataTable();
+      data1.addColumn('string', 'x');
+      data1.addColumn('number', 'y');
+
+      for (var i = 0; i < MAX; ++i) {
+        data.addRow(d[i]);
+        data1.addRow(d1[i]);
+    }
+    //  prevButton = document.getElementById('b1');
+      //nextButton = document.getElementById('b2');
+      //changeZoomButton = document.getElementById('b3');
+
+      // Disabling the button while the chart is drawing.
+     // prevButton.disabled = true;
+     // nextButton.disabled = true;
+    //  changeZoomButton.disabled = true;
+    
+    chart.draw(data, options);
+    chart1.draw(data1, options1);
+}
+
+drawChart();
+
+function previous(){
+  options.hAxis.viewWindow.min -= 1;
+  options.hAxis.viewWindow.max -= 1;
+  drawChart();  
+}
+
+function previous1(){
+  options1.hAxis.viewWindow.min -= 1;
+  options1.hAxis.viewWindow.max -= 1;
+  drawChart();  
+}
+
+function next(){
+  options.hAxis.viewWindow.min += 1;
+  options.hAxis.viewWindow.max += 1;
+  drawChart();
+}
+function next1(){
+  options1.hAxis.viewWindow.min += 1;
+  options1.hAxis.viewWindow.max += 1;
+  drawChart();
+}
+
+function zoom(){
+  if (zoomed) {
+    options.hAxis.viewWindow.min = 0;
+    options.hAxis.viewWindow.max = 5;
+} else {
+    options.hAxis.viewWindow.min = 0;
+    options.hAxis.viewWindow.max = MAX;
+}
+zoomed = !zoomed;
+drawChart();
+}
+function zoom1(){
+  if (zoomed1) {
+    options1.hAxis.viewWindow.min = 0;
+    options1.hAxis.viewWindow.max = 5;
+} else {
+    options1.hAxis.viewWindow.min = 0;
+    options1.hAxis.viewWindow.max = MAX;
+}
+zoomed1 = !zoomed1;
+drawChart();
+}
+</script>
+</body>
+
+</html>

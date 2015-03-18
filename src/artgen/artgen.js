@@ -1,12 +1,23 @@
 //main file
 
-ARTGEN = {};
+var ARTGEN = {};
 
 //starts the collection of brushes
 ARTGEN._brushes = new Collection(baseBrush);
 
 //starts the collection of painters
 ARTGEN._painters = new Collection(basePainter);
+
+//meta information about brushes
+ARTGEN.info_brushes = {};
+
+//meta information about painters
+ARTGEN.info_painters = {};
+
+//logs messages
+ARTGEN.log = function(msg) {
+    //console.log(msg);
+}
 
 /* 
  * adds a new brush to the collection
@@ -16,7 +27,9 @@ ARTGEN._painters = new Collection(basePainter);
  * @param {Object} methods Methods of the new brush
  */
 ARTGEN.addBrush = function(name, extend, method) {
-	this._brushes.add(name, extend, method);
+    //store meta information reference
+    this.info_brushes[name] = {};
+    this._brushes.add(name, extend, method, this.info_brushes[name]);
 };
 
 /* 
@@ -27,19 +40,28 @@ ARTGEN.addBrush = function(name, extend, method) {
  * @param {Object} methods Methods of the new painter
  */
 ARTGEN.addPainter = function(name, extend, method) {
-	this._painters.add(name, extend, method);
+
+    //store meta information reference
+    this.info_painters[name] = {
+        title: "",
+        description: "",
+        tags: [],
+        data_values: {},
+        options: {}
+    };
+    this._painters.add(name, extend, method, this.info_painters[name]);
 };
 
 /* 
  * starts the art generator
  */
-ARTGEN.init = function(canvas_id, painter) {
-    console.log("Starting ARTGEN on", canvas_id);
+ARTGEN.init = function(canvas_id, painter, options) {
+    this.log("Starting ARTGEN on", canvas_id);
 
     var instance = {};
     //set up the canvas
-    instance._canvas  = document.getElementById(canvas_id);
-    instance._ctx     = instance._canvas.getContext('2d');
+    instance._canvas = document.getElementById(canvas_id);
+    instance._ctx = instance._canvas.getContext('2d');
 
     instance._canvas.width = parseInt(instance._canvas.offsetWidth, 10);
     instance._canvas.height = parseInt(instance._canvas.offsetHeight, 10);
@@ -47,18 +69,43 @@ ARTGEN.init = function(canvas_id, painter) {
     //get the painter from the collection and initialize it
     var p = this._painters.get(painter);
     instance.painter = new p();
-    instance.painter.init(instance._canvas, instance._ctx);
+    instance.painter.init(instance._canvas, instance._ctx, options);
+    instance.data = [null];
+
+    //browser animation
+    requestAnimFrame = (function() {
+        return window.requestAnimationFrame ||
+            window.webkitRequestAnimationFrame ||
+            window.mozRequestAnimationFrame ||
+            window.oRequestAnimationFrame ||
+            window.msRequestAnimationFrame
+    })();
+
+    cancelAnimFrame = window.cancelAnimationFrame;
 
     //public API for this instance
-    instance.data = 0;
-    instance.paint = function() {
-        var c = 0;
-        this._interval = setInterval(function(d, i) {
-            instance.painter.paint(c++, instance.data);
-        }, 25);
+
+    /*
+     * Start paining, which animates
+     */
+    instance.paint = function(time) {
+
+        if (!time) {
+            time = new Date().getTime();
+        }
+        var _this = this;
+        this._animationFrame = requestAnimFrame(function() {
+            _this.paint(new Date().getTime());
+        });
+
+        instance.painter.paint(time, instance.data);
     }
+    
+    /*
+     * Stop paining
+     */
     instance.stop = function() {
-        clearInterval(this._interval);
+        cancelAnimFrame(this._animationFrame);
     }
 
     return instance;

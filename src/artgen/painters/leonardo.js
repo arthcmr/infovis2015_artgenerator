@@ -1,6 +1,6 @@
 ARTGEN.addPainter('leonardo', {
 	brushes: ['ink'],
-    paint: function(iteration, data) {
+    paint: function(time, data) {
     	var ink = this.getBrush(0);
     	if(!this._instantiated) {
     		ink.setColor(randomColor());

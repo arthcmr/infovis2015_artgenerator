@@ -130,10 +130,9 @@ module.exports = function(grunt) {
                     dest: '<%= config.dist %>',
                     src: [
                         '*.{ico,png,txt}',
-                        'assets/{,*/}*.{png,gif,jpg}',
                         '{,*/}*.html',
-                        'assets/styles/{,*/}*.css',
-                        'assets/fonts/{,*/}*.*'
+                        'assets/**/*',
+						'ncsound/**/*'
                     ]
                 }]
             },

@@ -1,13 +1,13 @@
 //gogh is an example of painter that paints only monochromatic colors
-ARTGEN.addPainter('gogh', {
-	brushes: ['circles'],
+ARTGEN.addPainter('pollock', {
+	brushes: ['splash'],
     paint: function(time, data) {
 
     	if(!this._instantiated) {
     		this.first_time = time;
     	}
 
-        var flock = this.getBrush(0);
+        var splash = this.getBrush(0);
 
     	//margins improve quality
     	margin = 50;
@@ -51,9 +51,9 @@ ARTGEN.addPainter('gogh', {
             this.color3 = 'rgba('+color3.join(',')+',0.2)';
             this.color4 = 'rgba('+color4.join(',')+',0.2)';
 
-    		flock.setColor(this.color1);
-    		flock.start(target_x, target_y);
-	    	flock.enable();
+    		splash.setColor(this.color1);
+    		splash.start(target_x, target_y);
+	    	splash.enable();
     		this._instantiated = true;
 
 	    	this._prevData = data;
@@ -61,22 +61,28 @@ ARTGEN.addPainter('gogh', {
     	}
 
     	if(data > this._prevData && !back) {
-    		flock.setColor(this.color1);            
+    		splash.setColor(this.color1);            
     	}
     	else if(data > this._prevData && back) {
-    		flock.setColor(this.color3);
+    		splash.setColor(this.color3);
     	}
     	else if(data < this._prevData && !back) {        
-    		flock.setColor(this.color2);
+    		splash.setColor(this.color2);
     	}
     	else if(data < this._prevData && back) {
-    		flock.setColor(this.color4);
+    		splash.setColor(this.color4);
     	}
 	
 		this._prevData = data;    	 
 
-    	flock.setTarget(target_x, target_y);
-    	flock.update();
-    	flock.draw();
+        this.color = "rgba(241,241,234,0.5)";
+            this.ctx.beginPath();
+            this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+
+    	splash.setTarget(Math.random() * this.canvas.width, 100 * data);
+    	splash.update();
+    	splash.draw();
     }
 })
