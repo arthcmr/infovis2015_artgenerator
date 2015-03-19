@@ -199,6 +199,128 @@ basePainter.prototype.setup = function() {
 basePainter.prototype.getBrush = function(name) {
     return this.brushes[name];
 };
+//VERONOI LIBRARY
+
+/*!
+Copyright (C) 2010-2013 Raymond Hill: https://github.com/gorhill/Javascript-Voronoi
+MIT License: See https://github.com/gorhill/Javascript-Voronoi/LICENSE.md
+*/
+;
+function Voronoi(){this.vertices=null;this.edges=null;this.cells=null;this.toRecycle=null;this.beachsectionJunkyard=[];this.circleEventJunkyard=[];
+this.vertexJunkyard=[];this.edgeJunkyard=[];this.cellJunkyard=[]}Voronoi.prototype.reset=function(){if(!this.beachline){this.beachline=new this.RBTree()
+}if(this.beachline.root){var a=this.beachline.getFirst(this.beachline.root);while(a){this.beachsectionJunkyard.push(a);a=a.rbNext
+}}this.beachline.root=null;if(!this.circleEvents){this.circleEvents=new this.RBTree()}this.circleEvents.root=this.firstCircleEvent=null;
+this.vertices=[];this.edges=[];this.cells=[]};Voronoi.prototype.sqrt=Math.sqrt;Voronoi.prototype.abs=Math.abs;Voronoi.prototype.ε=Voronoi.ε=1e-9;
+Voronoi.prototype.invε=Voronoi.invε=1/Voronoi.ε;Voronoi.prototype.equalWithEpsilon=function(d,c){return this.abs(d-c)<1e-9
+};Voronoi.prototype.greaterThanWithEpsilon=function(d,c){return d-c>1e-9};Voronoi.prototype.greaterThanOrEqualWithEpsilon=function(d,c){return c-d<1e-9
+};Voronoi.prototype.lessThanWithEpsilon=function(d,c){return c-d>1e-9};Voronoi.prototype.lessThanOrEqualWithEpsilon=function(d,c){return d-c<1e-9
+};Voronoi.prototype.RBTree=function(){this.root=null};Voronoi.prototype.RBTree.prototype.rbInsertSuccessor=function(e,a){var d;
+if(e){a.rbPrevious=e;a.rbNext=e.rbNext;if(e.rbNext){e.rbNext.rbPrevious=a}e.rbNext=a;if(e.rbRight){e=e.rbRight;while(e.rbLeft){e=e.rbLeft
+}e.rbLeft=a}else{e.rbRight=a}d=e}else{if(this.root){e=this.getFirst(this.root);a.rbPrevious=null;a.rbNext=e;e.rbPrevious=a;
+e.rbLeft=a;d=e}else{a.rbPrevious=a.rbNext=null;this.root=a;d=null}}a.rbLeft=a.rbRight=null;a.rbParent=d;a.rbRed=true;var c,b;
+e=a;while(d&&d.rbRed){c=d.rbParent;if(d===c.rbLeft){b=c.rbRight;if(b&&b.rbRed){d.rbRed=b.rbRed=false;c.rbRed=true;e=c}else{if(e===d.rbRight){this.rbRotateLeft(d);
+e=d;d=e.rbParent}d.rbRed=false;c.rbRed=true;this.rbRotateRight(c)}}else{b=c.rbLeft;if(b&&b.rbRed){d.rbRed=b.rbRed=false;c.rbRed=true;
+e=c}else{if(e===d.rbLeft){this.rbRotateRight(d);e=d;d=e.rbParent}d.rbRed=false;c.rbRed=true;this.rbRotateLeft(c)}}d=e.rbParent
+}this.root.rbRed=false};Voronoi.prototype.RBTree.prototype.rbRemoveNode=function(f){if(f.rbNext){f.rbNext.rbPrevious=f.rbPrevious
+}if(f.rbPrevious){f.rbPrevious.rbNext=f.rbNext}f.rbNext=f.rbPrevious=null;var e=f.rbParent,g=f.rbLeft,b=f.rbRight,d;if(!g){d=b
+}else{if(!b){d=g}else{d=this.getFirst(b)}}if(e){if(e.rbLeft===f){e.rbLeft=d}else{e.rbRight=d}}else{this.root=d}var a;if(g&&b){a=d.rbRed;
+d.rbRed=f.rbRed;d.rbLeft=g;g.rbParent=d;if(d!==b){e=d.rbParent;d.rbParent=f.rbParent;f=d.rbRight;e.rbLeft=f;d.rbRight=b;b.rbParent=d
+}else{d.rbParent=e;e=d;f=d.rbRight}}else{a=f.rbRed;f=d}if(f){f.rbParent=e}if(a){return}if(f&&f.rbRed){f.rbRed=false;return
+}var c;do{if(f===this.root){break}if(f===e.rbLeft){c=e.rbRight;if(c.rbRed){c.rbRed=false;e.rbRed=true;this.rbRotateLeft(e);
+c=e.rbRight}if((c.rbLeft&&c.rbLeft.rbRed)||(c.rbRight&&c.rbRight.rbRed)){if(!c.rbRight||!c.rbRight.rbRed){c.rbLeft.rbRed=false;
+c.rbRed=true;this.rbRotateRight(c);c=e.rbRight}c.rbRed=e.rbRed;e.rbRed=c.rbRight.rbRed=false;this.rbRotateLeft(e);f=this.root;
+break}}else{c=e.rbLeft;if(c.rbRed){c.rbRed=false;e.rbRed=true;this.rbRotateRight(e);c=e.rbLeft}if((c.rbLeft&&c.rbLeft.rbRed)||(c.rbRight&&c.rbRight.rbRed)){if(!c.rbLeft||!c.rbLeft.rbRed){c.rbRight.rbRed=false;
+c.rbRed=true;this.rbRotateLeft(c);c=e.rbLeft}c.rbRed=e.rbRed;e.rbRed=c.rbLeft.rbRed=false;this.rbRotateRight(e);f=this.root;
+break}}c.rbRed=true;f=e;e=e.rbParent}while(!f.rbRed);if(f){f.rbRed=false}};Voronoi.prototype.RBTree.prototype.rbRotateLeft=function(b){var d=b,c=b.rbRight,a=d.rbParent;
+if(a){if(a.rbLeft===d){a.rbLeft=c}else{a.rbRight=c}}else{this.root=c}c.rbParent=a;d.rbParent=c;d.rbRight=c.rbLeft;if(d.rbRight){d.rbRight.rbParent=d
+}c.rbLeft=d};Voronoi.prototype.RBTree.prototype.rbRotateRight=function(b){var d=b,c=b.rbLeft,a=d.rbParent;if(a){if(a.rbLeft===d){a.rbLeft=c
+}else{a.rbRight=c}}else{this.root=c}c.rbParent=a;d.rbParent=c;d.rbLeft=c.rbRight;if(d.rbLeft){d.rbLeft.rbParent=d}c.rbRight=d
+};Voronoi.prototype.RBTree.prototype.getFirst=function(a){while(a.rbLeft){a=a.rbLeft}return a};Voronoi.prototype.RBTree.prototype.getLast=function(a){while(a.rbRight){a=a.rbRight
+}return a};Voronoi.prototype.Diagram=function(a){this.site=a};Voronoi.prototype.Cell=function(a){this.site=a;this.halfedges=[];
+this.closeMe=false};Voronoi.prototype.Cell.prototype.init=function(a){this.site=a;this.halfedges=[];this.closeMe=false;return this
+};Voronoi.prototype.createCell=function(b){var a=this.cellJunkyard.pop();if(a){return a.init(b)}return new this.Cell(b)};
+Voronoi.prototype.Cell.prototype.prepareHalfedges=function(){var a=this.halfedges,b=a.length,c;while(b--){c=a[b].edge;if(!c.vb||!c.va){a.splice(b,1)
+}}a.sort(function(e,d){return d.angle-e.angle});return a.length};Voronoi.prototype.Cell.prototype.getNeighborIds=function(){var a=[],b=this.halfedges.length,c;
+while(b--){c=this.halfedges[b].edge;if(c.lSite!==null&&c.lSite.voronoiId!=this.site.voronoiId){a.push(c.lSite.voronoiId)}else{if(c.rSite!==null&&c.rSite.voronoiId!=this.site.voronoiId){a.push(c.rSite.voronoiId)
+}}}return a};Voronoi.prototype.Cell.prototype.getBbox=function(){var i=this.halfedges,d=i.length,a=Infinity,g=Infinity,c=-Infinity,b=-Infinity,h,f,e;
+while(d--){h=i[d].getStartpoint();f=h.x;e=h.y;if(f<a){a=f}if(e<g){g=e}if(f>c){c=f}if(e>b){b=e}}return{x:a,y:g,width:c-a,height:b-g}
+};Voronoi.prototype.Cell.prototype.pointIntersection=function(a,h){var b=this.halfedges,c=b.length,f,g,e,d;while(c--){f=b[c];
+g=f.getStartpoint();e=f.getEndpoint();d=(h-g.y)*(e.x-g.x)-(a-g.x)*(e.y-g.y);if(!d){return 0}if(d>0){return -1}}return 1};
+Voronoi.prototype.Vertex=function(a,b){this.x=a;this.y=b};Voronoi.prototype.Edge=function(b,a){this.lSite=b;this.rSite=a;
+this.va=this.vb=null};Voronoi.prototype.Halfedge=function(d,e,a){this.site=e;this.edge=d;if(a){this.angle=Math.atan2(a.y-e.y,a.x-e.x)
+}else{var c=d.va,b=d.vb;this.angle=d.lSite===e?Math.atan2(b.x-c.x,c.y-b.y):Math.atan2(c.x-b.x,b.y-c.y)}};Voronoi.prototype.createHalfedge=function(b,c,a){return new this.Halfedge(b,c,a)
+};Voronoi.prototype.Halfedge.prototype.getStartpoint=function(){return this.edge.lSite===this.site?this.edge.va:this.edge.vb
+};Voronoi.prototype.Halfedge.prototype.getEndpoint=function(){return this.edge.lSite===this.site?this.edge.vb:this.edge.va
+};Voronoi.prototype.createVertex=function(a,c){var b=this.vertexJunkyard.pop();if(!b){b=new this.Vertex(a,c)}else{b.x=a;b.y=c
+}this.vertices.push(b);return b};Voronoi.prototype.createEdge=function(e,a,d,b){var c=this.edgeJunkyard.pop();if(!c){c=new this.Edge(e,a)
+}else{c.lSite=e;c.rSite=a;c.va=c.vb=null}this.edges.push(c);if(d){this.setEdgeStartpoint(c,e,a,d)}if(b){this.setEdgeEndpoint(c,e,a,b)
+}this.cells[e.voronoiId].halfedges.push(this.createHalfedge(c,e,a));this.cells[a.voronoiId].halfedges.push(this.createHalfedge(c,a,e));
+return c};Voronoi.prototype.createBorderEdge=function(d,c,a){var b=this.edgeJunkyard.pop();if(!b){b=new this.Edge(d,null)
+}else{b.lSite=d;b.rSite=null}b.va=c;b.vb=a;this.edges.push(b);return b};Voronoi.prototype.setEdgeStartpoint=function(b,d,a,c){if(!b.va&&!b.vb){b.va=c;
+b.lSite=d;b.rSite=a}else{if(b.lSite===a){b.vb=c}else{b.va=c}}};Voronoi.prototype.setEdgeEndpoint=function(b,d,a,c){this.setEdgeStartpoint(b,a,d,c)
+};Voronoi.prototype.Beachsection=function(){};Voronoi.prototype.createBeachsection=function(a){var b=this.beachsectionJunkyard.pop();
+if(!b){b=new this.Beachsection()}b.site=a;return b};Voronoi.prototype.leftBreakPoint=function(e,f){var a=e.site,m=a.x,l=a.y,k=l-f;
+if(!k){return m}var n=e.rbPrevious;if(!n){return -Infinity}a=n.site;var h=a.x,g=a.y,d=g-f;if(!d){return h}var c=h-m,j=1/k-1/d,i=c/d;
+if(j){return(-i+this.sqrt(i*i-2*j*(c*c/(-2*d)-g+d/2+l-k/2)))/j+m}return(m+h)/2};Voronoi.prototype.rightBreakPoint=function(b,c){var d=b.rbNext;
+if(d){return this.leftBreakPoint(d,c)}var a=b.site;return a.y===c?a.x:Infinity};Voronoi.prototype.detachBeachsection=function(a){this.detachCircleEvent(a);
+this.beachline.rbRemoveNode(a);this.beachsectionJunkyard.push(a)};Voronoi.prototype.removeBeachsection=function(b){var a=b.circleEvent,j=a.x,h=a.ycenter,e=this.createVertex(j,h),f=b.rbPrevious,d=b.rbNext,l=[b],g=Math.abs;
+this.detachBeachsection(b);var m=f;while(m.circleEvent&&g(j-m.circleEvent.x)<1e-9&&g(h-m.circleEvent.ycenter)<1e-9){f=m.rbPrevious;
+l.unshift(m);this.detachBeachsection(m);m=f}l.unshift(m);this.detachCircleEvent(m);var c=d;while(c.circleEvent&&g(j-c.circleEvent.x)<1e-9&&g(h-c.circleEvent.ycenter)<1e-9){d=c.rbNext;
+l.push(c);this.detachBeachsection(c);c=d}l.push(c);this.detachCircleEvent(c);var k=l.length,i;for(i=1;i<k;i++){c=l[i];m=l[i-1];
+this.setEdgeStartpoint(c.edge,m.site,c.site,e)}m=l[0];c=l[k-1];c.edge=this.createEdge(m.site,c.site,undefined,e);this.attachCircleEvent(m);
+this.attachCircleEvent(c)};Voronoi.prototype.addBeachsection=function(l){var j=l.x,n=l.y;var p,m,v,q,o=this.beachline.root;
+while(o){v=this.leftBreakPoint(o,n)-j;if(v>1e-9){o=o.rbLeft}else{q=j-this.rightBreakPoint(o,n);if(q>1e-9){if(!o.rbRight){p=o;
+break}o=o.rbRight}else{if(v>-1e-9){p=o.rbPrevious;m=o}else{if(q>-1e-9){p=o;m=o.rbNext}else{p=m=o}}break}}}var e=this.createBeachsection(l);
+this.beachline.rbInsertSuccessor(p,e);if(!p&&!m){return}if(p===m){this.detachCircleEvent(p);m=this.createBeachsection(p.site);
+this.beachline.rbInsertSuccessor(e,m);e.edge=m.edge=this.createEdge(p.site,e.site);this.attachCircleEvent(p);this.attachCircleEvent(m);
+return}if(p&&!m){e.edge=this.createEdge(p.site,e.site);return}if(p!==m){this.detachCircleEvent(p);this.detachCircleEvent(m);
+var h=p.site,k=h.x,i=h.y,t=l.x-k,r=l.y-i,a=m.site,c=a.x-k,b=a.y-i,u=2*(t*b-r*c),g=t*t+r*r,f=c*c+b*b,s=this.createVertex((b*g-r*f)/u+k,(t*f-c*g)/u+i);
+this.setEdgeStartpoint(m.edge,h,a,s);e.edge=this.createEdge(h,l,undefined,s);m.edge=this.createEdge(l,a,undefined,s);this.attachCircleEvent(p);
+this.attachCircleEvent(m);return}};Voronoi.prototype.CircleEvent=function(){this.arc=null;this.rbLeft=null;this.rbNext=null;
+this.rbParent=null;this.rbPrevious=null;this.rbRed=false;this.rbRight=null;this.site=null;this.x=this.y=this.ycenter=0};Voronoi.prototype.attachCircleEvent=function(i){var r=i.rbPrevious,o=i.rbNext;
+if(!r||!o){return}var k=r.site,u=i.site,c=o.site;if(k===c){return}var t=u.x,s=u.y,n=k.x-t,l=k.y-s,f=c.x-t,e=c.y-s;var v=2*(n*e-l*f);
+if(v>=-2e-12){return}var h=n*n+l*l,g=f*f+e*e,m=(e*h-l*g)/v,j=(n*g-f*h)/v,b=j+s;var q=this.circleEventJunkyard.pop();if(!q){q=new this.CircleEvent()
+}q.arc=i;q.site=u;q.x=m+t;q.y=b+this.sqrt(m*m+j*j);q.ycenter=b;i.circleEvent=q;var a=null,p=this.circleEvents.root;while(p){if(q.y<p.y||(q.y===p.y&&q.x<=p.x)){if(p.rbLeft){p=p.rbLeft
+}else{a=p.rbPrevious;break}}else{if(p.rbRight){p=p.rbRight}else{a=p;break}}}this.circleEvents.rbInsertSuccessor(a,q);if(!a){this.firstCircleEvent=q
+}};Voronoi.prototype.detachCircleEvent=function(b){var a=b.circleEvent;if(a){if(!a.rbPrevious){this.firstCircleEvent=a.rbNext
+}this.circleEvents.rbRemoveNode(a);this.circleEventJunkyard.push(a);b.circleEvent=null}};Voronoi.prototype.connectEdge=function(l,a){var b=l.vb;
+if(!!b){return true}var c=l.va,p=a.xl,n=a.xr,r=a.yt,d=a.yb,o=l.lSite,e=l.rSite,i=o.x,h=o.y,k=e.x,j=e.y,g=(i+k)/2,f=(h+j)/2,m,q;
+this.cells[o.voronoiId].closeMe=true;this.cells[e.voronoiId].closeMe=true;if(j!==h){m=(i-k)/(j-h);q=f-m*g}if(m===undefined){if(g<p||g>=n){return false
+}if(i>k){if(!c||c.y<r){c=this.createVertex(g,r)}else{if(c.y>=d){return false}}b=this.createVertex(g,d)}else{if(!c||c.y>d){c=this.createVertex(g,d)
+}else{if(c.y<r){return false}}b=this.createVertex(g,r)}}else{if(m<-1||m>1){if(i>k){if(!c||c.y<r){c=this.createVertex((r-q)/m,r)
+}else{if(c.y>=d){return false}}b=this.createVertex((d-q)/m,d)}else{if(!c||c.y>d){c=this.createVertex((d-q)/m,d)}else{if(c.y<r){return false
+}}b=this.createVertex((r-q)/m,r)}}else{if(h<j){if(!c||c.x<p){c=this.createVertex(p,m*p+q)}else{if(c.x>=n){return false}}b=this.createVertex(n,m*n+q)
+}else{if(!c||c.x>n){c=this.createVertex(n,m*n+q)}else{if(c.x<p){return false}}b=this.createVertex(p,m*p+q)}}}l.va=c;l.vb=b;
+return true};Voronoi.prototype.clipEdge=function(d,i){var b=d.va.x,l=d.va.y,h=d.vb.x,g=d.vb.y,f=0,e=1,k=h-b,j=g-l;var c=b-i.xl;
+if(k===0&&c<0){return false}var a=-c/k;if(k<0){if(a<f){return false}if(a<e){e=a}}else{if(k>0){if(a>e){return false}if(a>f){f=a
+}}}c=i.xr-b;if(k===0&&c<0){return false}a=c/k;if(k<0){if(a>e){return false}if(a>f){f=a}}else{if(k>0){if(a<f){return false
+}if(a<e){e=a}}}c=l-i.yt;if(j===0&&c<0){return false}a=-c/j;if(j<0){if(a<f){return false}if(a<e){e=a}}else{if(j>0){if(a>e){return false
+}if(a>f){f=a}}}c=i.yb-l;if(j===0&&c<0){return false}a=c/j;if(j<0){if(a>e){return false}if(a>f){f=a}}else{if(j>0){if(a<f){return false
+}if(a<e){e=a}}}if(f>0){d.va=this.createVertex(b+f*k,l+f*j)}if(e<1){d.vb=this.createVertex(b+e*k,l+e*j)}if(f>0||e<1){this.cells[d.lSite.voronoiId].closeMe=true;
+this.cells[d.rSite.voronoiId].closeMe=true}return true};Voronoi.prototype.clipEdges=function(e){var a=this.edges,d=a.length,c,b=Math.abs;
+while(d--){c=a[d];if(!this.connectEdge(c,e)||!this.clipEdge(c,e)||(b(c.va.x-c.vb.x)<1e-9&&b(c.va.y-c.vb.y)<1e-9)){c.va=c.vb=null;
+a.splice(d,1)}}};Voronoi.prototype.closeCells=function(p){var g=p.xl,d=p.xr,m=p.yt,j=p.yb,q=this.cells,a=q.length,n,e,o,c,b,l,k,i,f,h=Math.abs;
+while(a--){n=q[a];if(!n.prepareHalfedges()){continue}if(!n.closeMe){continue}o=n.halfedges;c=o.length;e=0;while(e<c){l=o[e].getEndpoint();
+i=o[(e+1)%c].getStartpoint();if(h(l.x-i.x)>=1e-9||h(l.y-i.y)>=1e-9){switch(true){case this.equalWithEpsilon(l.x,g)&&this.lessThanWithEpsilon(l.y,j):f=this.equalWithEpsilon(i.x,g);
+k=this.createVertex(g,f?i.y:j);b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));c++;
+if(f){break}l=k;case this.equalWithEpsilon(l.y,j)&&this.lessThanWithEpsilon(l.x,d):f=this.equalWithEpsilon(i.y,j);k=this.createVertex(f?i.x:d,j);
+b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));c++;if(f){break}l=k;case this.equalWithEpsilon(l.x,d)&&this.greaterThanWithEpsilon(l.y,m):f=this.equalWithEpsilon(i.x,d);
+k=this.createVertex(d,f?i.y:m);b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));c++;
+if(f){break}l=k;case this.equalWithEpsilon(l.y,m)&&this.greaterThanWithEpsilon(l.x,g):f=this.equalWithEpsilon(i.y,m);k=this.createVertex(f?i.x:g,m);
+b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));c++;if(f){break}l=k;f=this.equalWithEpsilon(i.x,g);
+k=this.createVertex(g,f?i.y:j);b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));c++;
+if(f){break}l=k;f=this.equalWithEpsilon(i.y,j);k=this.createVertex(f?i.x:d,j);b=this.createBorderEdge(n.site,l,k);e++;o.splice(e,0,this.createHalfedge(b,n.site,null));
+c++;if(f){break}l=k;f=this.equalWithEpsilon(i.x,d);k=this.createVertex(d,f?i.y:m);b=this.createBorderEdge(n.site,l,k);e++;
+o.splice(e,0,this.createHalfedge(b,n.site,null));c++;if(f){break}default:throw"Voronoi.closeCells() > this makes no sense!"
+}}e++}n.closeMe=false}};Voronoi.prototype.quantizeSites=function(c){var b=this.ε,d=c.length,a;while(d--){a=c[d];a.x=Math.floor(a.x/b)*b;
+a.y=Math.floor(a.y/b)*b}};Voronoi.prototype.recycle=function(a){if(a){if(a instanceof this.Diagram){this.toRecycle=a}else{throw"Voronoi.recycleDiagram() > Need a Diagram object."
+}}};Voronoi.prototype.compute=function(i,j){var d=new Date();this.reset();if(this.toRecycle){this.vertexJunkyard=this.vertexJunkyard.concat(this.toRecycle.vertices);
+this.edgeJunkyard=this.edgeJunkyard.concat(this.toRecycle.edges);this.cellJunkyard=this.cellJunkyard.concat(this.toRecycle.cells);
+this.toRecycle=null}var h=i.slice(0);h.sort(function(n,m){var o=m.y-n.y;if(o){return o}return m.x-n.x});var b=h.pop(),l=0,f,e,k=this.cells,a;
+for(;;){a=this.firstCircleEvent;if(b&&(!a||b.y<a.y||(b.y===a.y&&b.x<a.x))){if(b.x!==f||b.y!==e){k[l]=this.createCell(b);b.voronoiId=l++;
+this.addBeachsection(b);e=b.y;f=b.x}b=h.pop()}else{if(a){this.removeBeachsection(a.arc)}else{break}}}this.clipEdges(j);this.closeCells(j);
+var c=new Date();var g=new this.Diagram();g.cells=this.cells;g.edges=this.edges;g.vertices=this.vertices;g.execTime=c.getTime()-d.getTime();
+this.reset();return g};
 //adapted from https://github.com/hornairs/blog/blob/master/assets/coffeescripts/flocking/vector.coffee
 var Vector = (function() {
   var name, _fn, _i, _len, _ref;
@@ -3426,6 +3548,138 @@ ARTGEN.addBrush('transient', {
 		this.dying = [];
 	},
 });
+ARTGEN.addBrush('veronoi', {
+
+    init: function(c) {
+
+        //context
+        this.ctx = c;
+        //include enable/disable method
+        this._enabled = false;
+
+        //general settings
+        this._settings = _.extend({
+            COLOR: "rgba(52, 152, 219,0.1)",
+        }, (this._settings || {}));
+
+        //Positions
+        this.positionX;
+        this.positionY;
+
+        this.voronoi = new Voronoi();
+        this.sites = [{
+            x: 0,
+            y: 0
+        }];
+        this.bbox = {
+            xl: 0,
+            xr: this.ctx.canvas.width,
+            yt: 0,
+            yb: this.ctx.canvas.height
+        };
+
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        this.target = this.sites[0];
+        this.style = 'fill';
+    },
+
+    start: function(x, y) {
+        this.target.x = x;
+        this.target.y = y;
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+    },
+
+
+    setTarget: function(x, y) {
+        this.target.x = x;
+        this.target.y = y;
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+    },
+
+    setStyle: function(style) {
+        this.style = style;
+    },
+
+    enable: function() {
+        this._enabled = true;
+        this._settings.COLOR = this.color;
+    },
+
+    disable: function() {
+        this._enabled = false;
+        this._settings.COLOR = "rgba(255,255,255,0)";
+    },
+
+    setColor: function(color) {
+        this.color = color;
+        if (this._enabled) this._settings.COLOR = color;
+    },
+
+    addRandom: function(number) {
+        for (var i = 0; i < number; i++) {
+            this.sites.push({
+                x: Math.round(Math.random() * this.ctx.canvas.width),
+                y: Math.round(Math.random() * this.ctx.canvas.height)
+            });
+        }
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+    },
+
+    clearAll: function() {
+        this.sites = [{
+            x: 0,
+            y: 0
+        }];
+        this.target = this.sites[0];
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+    },
+
+    addPoint: function() {
+        this.sites.push({
+            x: this.target.x+1,
+            y: this.target.y+1
+        });
+        this.diagram = this.voronoi.compute(this.sites, this.bbox);
+        this.target = this.sites[0];
+    },
+
+    update: function() {
+        this.bbox = {
+            xl: 0,
+            xr: this.ctx.canvas.width,
+            yt: 0,
+            yb: this.ctx.canvas.height
+        };
+    },
+
+    draw: function() {
+
+        var cell = this.diagram.cells[this.sites[0].voronoiId];
+        if (cell) {
+            var halfedges = cell.halfedges,
+                nHalfedges = halfedges.length;
+            if (nHalfedges > 2) {
+                var v = halfedges[0].getStartpoint();
+                this.ctx.beginPath();
+                this.ctx.moveTo(v.x, v.y);
+                for (var iHalfedge = 0; iHalfedge < nHalfedges; iHalfedge++) {
+                    v = halfedges[iHalfedge].getEndpoint();
+                    this.ctx.lineTo(v.x, v.y);
+                }
+
+                if(this.style === 'stroke') {
+                    this.ctx.strokeStyle = this._settings.COLOR;
+                    this.ctx.stroke();
+                } else {
+                    this.ctx.fillStyle = this._settings.COLOR;
+                    this.ctx.fill();
+                }
+
+            }
+        }
+    },
+
+});
 ARTGEN.addBrush('vortex', {
     init: function() {
 	
@@ -4113,6 +4367,203 @@ ARTGEN.addPainter('pollock', {
     	splash.draw();
     }
 })
+//gogh is an example of painter that paints only monochromatic colors
+ARTGEN.addPainter('vangoghnoi', {
+
+    /* =============== META INFORMATION ================= */
+
+    title: "Van Goghnoi",
+    description: "Using veronoi diagrams to express speech",
+    tags: ["energy", "color", "expressiveness"],
+
+    // determine, in order, what the data values are used for
+    data_values: [{
+        description: "determines when a point will be added",
+        options: ["silence", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+
+        //all possible
+    }, {
+        description: "used for X position",
+        options: ["emotion", "energy", "mfcc", "spectralCentroid", "spectralSlope", "spectralSpread", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+    }, {
+        description: "used for Y position",
+        options: ["intensity", "speed", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+    }, {
+        description: "used for color",
+        options: ["intensity", "speed", "emotion", "perceptualSpread", "loudness", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "rms", "perceptualSpread", "perceptualSharpness"]
+    }],
+
+    //extra visual options
+    options: {
+        color1: {
+            name: "Color 1",
+            description: "used for determine the first color",
+            options: ["blue", "red", "purple", "monochrome", "green", "orange", "gold", "*"]
+        },
+        color2: {
+            name: "Color 2",
+            description: "used for determine the second",
+            options: ["green", "red", "blue", "purple", "monochrome", "orange", "gold", "*"]
+        },
+        size: {
+            name: "Size",
+            description: "initial size",
+            options: ["100", "50", "200"]
+        },
+        style: {
+            name: "Style",
+            description: 'Style of this paiting',
+            options: ['fill', "stroke"]
+        },
+        intervals: {
+            name: "Intervals",
+            description: 'Draw Intervals?',
+            options: ['no', "yes"]
+        },
+        composition: {
+            name: "Composition",
+            description: 'Composition type',
+            options: ['source-over', "darker"]
+        }
+    },
+
+
+    /* =============== IMPLEMENTATION ================= */
+
+    brushes: ['veronoi'],
+
+    paint: function(time, data) {
+
+        function formatColor(rgbArray, alph) {
+            if (!alph) alph = 0.08;
+            return "rgba(" + rgbArray.join(',') + "," + alph.toString() + ")";
+        }
+
+        function interpolateColors(rgb1, rgb2, percentage) {
+            var res = [];
+            for (var i = 0; i < 3; i++) {
+                res[i] = Math.round(rgb1[i] + ((rgb2[i] - rgb1[i]) * percentage));
+            }
+            return res;
+        }
+
+        var brush = this.brushes[0];
+
+        var max_x = this.canvas.width,
+            max_y = this.canvas.height,
+            center_x = this.canvas.width / 2,
+            center_y = this.canvas.height / 2,
+            target_x = data[1] / 100 * max_x || 0,
+            target_y = data[2] / 100 * max_y || 0;
+
+        if (!this._instantiated) {
+            this.first_time = time;
+        }
+
+        if (!this._instantiated) {
+
+
+            var color = "#FFFFFF";
+            this.ctx.beginPath();
+            this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.fillStyle = color;
+            this.ctx.fill();
+
+            this.ctx.globalCompositeOperation = this.options.composition;
+
+            if (this.options.style === 'fill') {
+                this.color1 = randomColor({
+                    hue: this.options.color1,
+                    format: 'rgbArray'
+                });
+
+                this.color2 = randomColor({
+                    hue: this.options.color2,
+                    format: 'rgbArray'
+                });
+            } else {
+                this.color1 = randomColor({
+                    hue: this.options.color1,
+                    format: 'rgbArray',
+                    luminosity: 'dark'
+                });
+
+                this.color2 = randomColor({
+                    hue: this.options.color2,
+                    format: 'rgbArray',
+                    luminosity: 'dark'
+                });
+            }
+            
+            brush.setColor(formatColor(this.color1));
+            brush.start(target_x, target_y);
+            brush.addRandom(this.options.size);
+
+            this._instantiated = true;
+            this._prevData = 1;
+            if (this.options.intervals === "yes") {
+                brush.enable();
+            }
+        }
+
+        // for (var i = 0; i < flocks.length; i++) {
+        //     var color = (data) ? this.colorDark1 : this.colorLight1;
+        //     flocks[i].setColor(color);
+        // }
+
+        // var color = "rgba(255,255,255,0.)";
+        // this.ctx.beginPath();
+        // this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+        // this.ctx.fillStyle = color;
+        // this.ctx.fill();
+
+        // target_x2 -= (!data * max_width);
+
+        //data 0 is used for adding points
+
+        if (this._prevData !== 0 && data[0] === 0) {
+            //not silent
+            if (this.options.intervals === "no") {
+                brush.enable();
+            }
+        } else if (this._prevData === 0 && data[0] !== 0) {
+            //now its silent
+            if (this.options.intervals === "no") {
+                // brush.clearAll();
+                // brush.addRandom(this.options.size);
+                brush.addPoint();
+                brush.disable();
+            }
+        }
+        this._prevData = data[0];
+
+        var change = (data[3] / 100);
+        if(change > 1) change = 1;
+        if(change < 0) change = 0;
+
+        var color = interpolateColors(this.color1, this.color2, change);
+
+        if (this.options.intervals === "yes" && data[0] > 0) {
+            color = [255,255,255];
+        }
+
+
+        // var color = "rgba(255,255,255,0.001)";
+        // this.ctx.beginPath();
+        // this.ctx.rect(0, 0, this.canvas.width, this.canvas.height);
+        // this.ctx.fillStyle = color;
+        // this.ctx.fill();
+
+        //data 3 is used for color scale
+
+        brush.setStyle(this.options.style);
+        var alpha = (this.options.style === 'fill') ? 0.08 : 0.1;
+        brush.setColor(formatColor(color, alpha));
+        brush.setTarget(target_x, target_y);
+        brush.update();
+        brush.draw();
+    }
+});
 ARTGEN.addPainter('zeus', {
 	brushes: ['thunderbolt', 'thunderbolt'],
     paint: function(time, data) {
