@@ -29,12 +29,12 @@ ARTGEN.addPainter('vangoghnoi', {
         color1: {
             name: "Color 1",
             description: "used for determine the first color",
-            options: ["green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
+            options: ["green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome", "any"]
         },
         color2: {
             name: "Color 2",
             description: "used for determine the second",
-            options: ["red", "green", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
+            options: ["red", "green", "orange", "yellow", "blue", "purple", "pink", "monochrome", "any"]
         },
         style: {
             name: "Style",

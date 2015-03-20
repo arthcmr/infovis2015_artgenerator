@@ -24,18 +24,18 @@ ARTGEN.addPainter('circle', {
         color: {
             name: "Color",
             description: "used for determine the color palette",
-            options: ["red", "blue", "purple", "monochromatic", "green", "orange", "gold", "*"]
+            options: ["green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome", "any"]
         }
     },
 
 
     /* =============== IMPLEMENTATION ================= */
 
-    brushes: ['ink', 'flock', 'flock', 'flock', 'hairy'],
+    brushes: ['flock',  'flock', 'flock', 'flock', 'flock'],
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 20 + (order*10) )) + reference;
+        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 20 + (3*10) )) + reference;
     },
 
     paint: function(time, data) {
