@@ -96,8 +96,8 @@ ARTGEN.addPainter('vangoghnoi', {
             center_y = this.canvas.height / 2,
             target_x = easeOutIn(data[1], 100) / 100 * max_x || 0,
             target_y = easeOutIn(data[2], 100) / 100 * max_y || 0,
-            ratio_x = 0.7;
-            ratio_y = 0.7;
+            ratio_x = 1;
+            ratio_y = 1;
 
             target_x = target_x * 1/ratio_x;
             target_y = target_y * 1/ratio_y;
