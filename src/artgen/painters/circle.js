@@ -3,20 +3,20 @@ ARTGEN.addPainter('circle', {
 
     /* =============== META INFORMATION ================= */
 
-    title: "Circle",
-    description: "The ephemeral nature of speech represented through deformed rings",
-    tags: ["energy", "color", "expressiveness"],
+    title: "Ouroboros",
+    description: "Orbiting erratically around an everlasting ring of paint, your voice features will slowly bloom into a complex flower of energy",
+    tags: ["particles", "boids", "continuous"],
 
     // determine, in order, what the data values are used for
     data_values: [{
-        description: "used for the 1st and 3rd brushes",
-        options: ["mfcc", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        description: "used for the 1st brush",
+        options: ["intensity", "silence", "emotion", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
-        description: "used for the 2nd and 5th brushes",
-        options: ["rms", "zcr", "mfcc", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        description: "used for the 2nd brush",
+        options: ["energy", "silence", "emotion", "intensity", "speed", "rms", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
-        description: "used for the 4th brush",
-        options: ["energy", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        description: "used for the 3rd brush",
+        options: ["emotion", "silence", "intensity", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }],
 
     //extra visual options
@@ -31,11 +31,11 @@ ARTGEN.addPainter('circle', {
 
     /* =============== IMPLEMENTATION ================= */
 
-    brushes: ['flock', 'flock', 'flock', 'flock', 'flock'],
+    brushes: ['ink', 'flock', 'flock', 'flock', 'hairy'],
 
     _calcPos: function(func, time, data, order, radius, reference) {
         func = Math[func];
-        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 50 + (order*10) )) + reference;
+        return func(time % (2 * Math.PI)) * (radius / 3 + (data * 20 + (order*10) )) + reference;
     },
 
     paint: function(time, data) {

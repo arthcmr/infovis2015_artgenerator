@@ -3,9 +3,9 @@ ARTGEN.addPainter('vangoghnoi', {
 
     /* =============== META INFORMATION ================= */
 
-    title: "Van Goghnoi",
-    description: "Using veronoi diagrams to express speech",
-    tags: ["energy", "color", "expressiveness"],
+    title: "van Goghnoi",
+    description: "Like layered stained-glass or spidery silk weavings, van Gogh would have given his right ear for this expressionistic interpretation of painting-by-numbers",
+    tags: ["geometric", "voronoi", "discrete"],
 
     // determine, in order, what the data values are used for
     data_values: [{
@@ -82,6 +82,9 @@ ARTGEN.addPainter('vangoghnoi', {
         };
 
         function easeOutIn(t, d) {
+
+            return t;
+            
             var half = d / 2;
             if (t <= half) {
                 return easeOut(t, half);

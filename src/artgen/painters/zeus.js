@@ -2,9 +2,9 @@ ARTGEN.addPainter('zeus', {
 
     /* =============== META INFORMATION ================= */
 
-    title: "Zeus",
-    description: "Thunders everywhere",
-    tags: ["energy", "color", "expressiveness"],
+    title: "Poseidon",
+    description: "Reflecting the peregrinating nature of conversations, these cascading curtains of hair-fine droplets slowly develop into a beautiful meandering river",
+    tags: ["particles", "flow"],
 
     // determine, in order, what the data values are used for
     data_values: [{
