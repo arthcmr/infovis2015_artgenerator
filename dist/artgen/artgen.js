@@ -2833,13 +2833,20 @@ ARTGEN.addBrush('thunderbolt', {
 		this.splitThisBolt = 0;
 
     },
-    update: function(canvas, ctx, data) {
+    update: function(canvas, ctx, data, color) {
+
+
+    	this.expressiveness = data[0]/100; //getting 0 to 100
+    	this.energy = data[1]/100; //getting 0 to 100
+    	this.silence = data[2]; //value in ms
+
 		// Plugged on channel 4 with silence data, 0 or 1
-		if (typeof data == "undefined" || data[0] == null || data == null) {
-			return;
-		}
-		if (data == 0) { this.silenceCounter++; }
-		else if (data == 1) { this.speakingCounter++; }
+		// if (typeof data == "undefined" || data[0] == null || data == null) {
+		// 	return;
+		// }
+
+		if (this.silence > 0) { this.silenceCounter++; }
+		else if (this.silence == 0) { this.speakingCounter++; }
 		
 		if (this.silenceCounter >= this.silenceCountMax) {
 			this.silenceCounter = 0;
@@ -2854,8 +2861,8 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		//if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
 		//this.expBuffer.push(parseFloat(data[1]));
-		this.simulateExpressiveness();
-		this.simulateEnergy();
+		// this.simulateExpressiveness();
+		// this.simulateEnergy();
 		//this.expBuffer.push(this.expressiveness);
 		
 		var births = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
@@ -2878,18 +2885,23 @@ ARTGEN.addBrush('thunderbolt', {
 		this.movePositrons(canvas);
 		this.moveElectrons(canvas); 
     },
-    draw: function(ctx) {
-        this.drawElectrons(ctx);
+    draw: function(ctx, color) {
+
+    	this.color = color;
+        this.drawElectrons(ctx, color);
     },
     start: function(ctx, canvas, extraArgs) {
 		// For the brush thunderbolt, extraArgs == [{Number}, {Number}, {String}]
-		ctx.rect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle = "black";
-		ctx.fill();
+		// ctx.rect(0, 0, canvas.width, canvas.height);
+		// ctx.fillStyle = "black";
+		// ctx.fill();
 		
 		var xStart = extraArgs[0] * canvas.width;
 		var yStart = extraArgs[1] * canvas.height;
 		var way = extraArgs[2];
+
+		this.maxX = canvas.width;
+		this.maxY = canvas.height;
 		
 		for (var i = 0; i < this.boltsNb; i++) {
 			this.bolts.push([]);
@@ -2908,15 +2920,15 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		this.feed(this.generation1perBolt);
     },
-	simulateExpressiveness: function() {
-		this.expCounter++;
-		this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
+	// simulateExpressiveness: function() {
+	// 	this.expCounter++;
+	// 	this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
 		
-	},
-	simulateEnergy: function() {
-		this.energyCounter++;
-		this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
-	},
+	// },
+	// simulateEnergy: function() {
+	// 	this.energyCounter++;
+	// 	this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
+	// },
 	addElectron: function(boltKey, x, y, xSpeed, ySpeed) {
 		this.bolts[boltKey].push({
 			x: x,
@@ -2932,7 +2944,10 @@ ARTGEN.addBrush('thunderbolt', {
 		for (var key1 = 0; key1 < this.positrons.length; key1++) {
 			var positron = this.positrons[key1];
 			// Angle in desired range. If expressiveness remains around 0.5, the bolt with hore an horizontal overall motion
-			var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
+			// var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
+
+			//TODO: Understand Why these angles
+			var positronSpeedAng = 2*Math.PI/360 * ( 60 + this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
 			
 			// Left or right? Can be improved, using directly angle launch from painter parameter
 			positronSpeedAng += (positron.way == "right" ? 0 : Math.PI);
@@ -2941,6 +2956,11 @@ ARTGEN.addBrush('thunderbolt', {
 			positron.ySpeed = positron.speed * Math.sin(positronSpeedAng); 
 			positron.x += positron.xSpeed;
 			positron.y += positron.ySpeed;
+
+			//TODO: Check if this makes sense
+			positron.x = (positron.x > this.maxX || positron.x < 0) ? positron.x % this.maxX : positron.x;
+			positron.y = (positron.y > this.maxY || positron.y < 0) ? positron.y % this.maxY : positron.y;
+
 			positron.r = this.energyToPositronRadiusRate * this.energy;
 		}
 	},
@@ -3004,12 +3024,13 @@ ARTGEN.addBrush('thunderbolt', {
 		}
 		
 	},
-	drawElectrons: function(ctx) {
+	drawElectrons: function(ctx, color) {
+
 		// In bolts
 		for (key in this.bolts) {
 			for (key2 in this.bolts[key]) {
 				var electron = this.bolts[key][key2];
-				ctx.strokeStyle = "rgba(255, 255, 255, " + this.beamOpacity + ")";
+				ctx.strokeStyle = "rgba("+ this.color.join(",") +", " + this.beamOpacity + ")";
 				ctx.lineWidth = 1;
 				ctx.beginPath();
 				ctx.moveTo(electron.xLast, electron.yLast);
@@ -3022,7 +3043,7 @@ ARTGEN.addBrush('thunderbolt', {
 		for (key3 in this.falling) {
 			for (key4 in this.falling[key3]) {
 				var electron = this.falling[key3][key4];
-				ctx.strokeStyle = "rgba(255, 255, 255, " + this.fallingParticlesOpacity + ")";
+				ctx.strokeStyle = "rgba("+ this.color.join(",") +", " + this.fallingParticlesOpacity + ")";
 				ctx.lineWidth = 1;
 				ctx.beginPath();
 				ctx.moveTo(electron.xLast, electron.yLast);
@@ -4379,18 +4400,18 @@ ARTGEN.addPainter('vangoghnoi', {
     // determine, in order, what the data values are used for
     data_values: [{
         description: "determines when a point will be added",
-        options: ["silence", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["silence", "emotion", "intensity", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
 
         //all possible
     }, {
         description: "used for X position",
-        options: ["emotion", "energy", "mfcc", "spectralCentroid", "spectralSlope", "spectralSpread", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["emotion", "intensity", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
         description: "used for Y position",
-        options: ["intensity", "speed", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["intensity", "emotion", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
         description: "used for color",
-        options: ["intensity", "speed", "emotion", "perceptualSpread", "loudness", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "rms", "perceptualSpread", "perceptualSharpness"]
+        options: ["intensity", "emotion", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }],
 
     //extra visual options
@@ -4398,17 +4419,12 @@ ARTGEN.addPainter('vangoghnoi', {
         color1: {
             name: "Color 1",
             description: "used for determine the first color",
-            options: ["blue", "red", "purple", "monochrome", "green", "orange", "gold", "*"]
+            options: ["green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
         },
         color2: {
             name: "Color 2",
             description: "used for determine the second",
-            options: ["green", "red", "blue", "purple", "monochrome", "orange", "gold", "*"]
-        },
-        size: {
-            name: "Size",
-            description: "initial size",
-            options: ["100", "50", "200"]
+            options: ["red", "green", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
         },
         style: {
             name: "Style",
@@ -4419,11 +4435,6 @@ ARTGEN.addPainter('vangoghnoi', {
             name: "Intervals",
             description: 'Draw Intervals?',
             options: ['no', "yes"]
-        },
-        composition: {
-            name: "Composition",
-            description: 'Composition type',
-            options: ['source-over', "darker"]
         }
     },
 
@@ -4449,12 +4460,37 @@ ARTGEN.addPainter('vangoghnoi', {
 
         var brush = this.brushes[0];
 
+        function easeIn(t, d) {
+            t /= d;
+            return d * t * t * t;
+        };
+
+        function easeOut(t, d) {
+            t /= d;
+            t--;
+            return d * (t * t * t + 1);
+        };
+
+        function easeOutIn(t, d) {
+            var half = d / 2;
+            if (t <= half) {
+                return easeOut(t, half);
+            } else {
+                return half + easeIn((t - half), half);
+            }
+        }
+
         var max_x = this.canvas.width,
             max_y = this.canvas.height,
             center_x = this.canvas.width / 2,
             center_y = this.canvas.height / 2,
-            target_x = data[1] / 100 * max_x || 0,
-            target_y = data[2] / 100 * max_y || 0;
+            target_x = easeOutIn(data[1], 100) / 100 * max_x || 0,
+            target_y = easeOutIn(data[2], 100) / 100 * max_y || 0,
+            ratio_x = 0.7;
+            ratio_y = 0.7;
+
+            target_x = target_x * 1/ratio_x;
+            target_y = target_y * 1/ratio_y;
 
         if (!this._instantiated) {
             this.first_time = time;
@@ -4469,7 +4505,7 @@ ARTGEN.addPainter('vangoghnoi', {
             this.ctx.fillStyle = color;
             this.ctx.fill();
 
-            this.ctx.globalCompositeOperation = this.options.composition;
+            // this.ctx.globalCompositeOperation = 'source-over';
 
             if (this.options.style === 'fill') {
                 this.color1 = randomColor({
@@ -4494,10 +4530,10 @@ ARTGEN.addPainter('vangoghnoi', {
                     luminosity: 'dark'
                 });
             }
-            
+
             brush.setColor(formatColor(this.color1));
             brush.start(target_x, target_y);
-            brush.addRandom(this.options.size);
+            brush.addRandom(200);
 
             this._instantiated = true;
             this._prevData = 1;
@@ -4538,13 +4574,13 @@ ARTGEN.addPainter('vangoghnoi', {
         this._prevData = data[0];
 
         var change = (data[3] / 100);
-        if(change > 1) change = 1;
-        if(change < 0) change = 0;
+        if (change > 1) change = 1;
+        if (change < 0) change = 0;
 
         var color = interpolateColors(this.color1, this.color2, change);
 
         if (this.options.intervals === "yes" && data[0] > 0) {
-            color = [255,255,255];
+            color = [255, 255, 255];
         }
 
 
@@ -4559,25 +4595,90 @@ ARTGEN.addPainter('vangoghnoi', {
         brush.setStyle(this.options.style);
         var alpha = (this.options.style === 'fill') ? 0.08 : 0.1;
         brush.setColor(formatColor(color, alpha));
-        brush.setTarget(target_x, target_y);
+
+        //only move if not silent when drawing 
+        if (this.options.intervals !== "yes" || data[0] === 0) {
+            brush.setTarget(target_x, target_y);
+        }
         brush.update();
         brush.draw();
     }
 });
 ARTGEN.addPainter('zeus', {
-	brushes: ['thunderbolt', 'thunderbolt'],
+
+    /* =============== META INFORMATION ================= */
+
+    title: "Zeus",
+    description: "Thunders everywhere",
+    tags: ["energy", "color", "expressiveness"],
+
+    // determine, in order, what the data values are used for
+    data_values: [{
+        description: "determines the angle",
+        options: ["intensity", "silence", "emotion", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
+    },
+    {
+        description: "determines the radius",
+        options: ["energy", "silence", "emotion", "intensity", "speed", "rms", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
+    },
+    {
+        description: "determines when particles die",
+        options: ["silence", "emotion", "intensity", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
+    }],
+
+    //extra visual options
+    options: {
+        background: {
+            name: "Background",
+            description: "used for determine the background color",
+            options: ["black", "green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome", "white"]
+        },
+        stroke: {
+            name: "Stroke",
+            description: "used for determine the foreground color",
+            options: ["white", "red", "green", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
+        }
+    },
+
+
+    /* =============== IMPLEMENTATION ================= */
+
+
+	brushes: ['thunderbolt'],
     paint: function(time, data) {
-    	var bolt = this.getBrush(0);
-    	var bolt2 = this.getBrush(1);
-    	if(!this._instantiated) {
+    	
+        var bolt = this.getBrush(0);
+    	// var bolt2 = this.getBrush(1);
+    	
+        if(!this._instantiated) {
+            
+            this.ctx.rect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+            if(this.options.background === "black" || this.options.background === "white") {
+                this.ctx.fillStyle = this.options.background;
+            }
+            else {
+                this.ctx.fillStyle = randomColor({ hue: this.options.background, luminosity: 'dark' });
+            }
+            this.ctx.fill();
+
+            if(this.options.stroke === "black" || this.options.stroke === "white") {
+                this.color = (this.options.stroke === "white") ? [255,255,255] : [0,0,0];
+            }
+            else {
+                var luminosity = (this.options.background === "white") ? 'dark' :  'light';
+                this.color = randomColor({ hue: this.options.stroke, luminosity: luminosity, format:"rgbArray" });
+            }
+
     		bolt.start(this.ctx, this.canvas, [0, 1/2, "right"]);
-    		bolt2.start(this.ctx, this.canvas, [1, 1/2, "left"]);
+    		// bolt2.start(this.ctx, this.canvas, [1, 1/2, "left"]);
     		this._instantiated = true;
     	}
-    	bolt.update(this.canvas, this.ctx, data);
-    	bolt.draw(this.ctx);
-		bolt2.update(this.canvas, this.ctx, data);
-    	bolt2.draw(this.ctx);
+    	
+        bolt.update(this.canvas, this.ctx, data);
+    	bolt.draw(this.ctx, this.color);
+
+		// bolt2.update(this.canvas, this.ctx, data);
+  //   	bolt2.draw(this.ctx);
     }
 })
 	return ARTGEN;

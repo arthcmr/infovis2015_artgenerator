@@ -10,18 +10,18 @@ ARTGEN.addPainter('vangoghnoi', {
     // determine, in order, what the data values are used for
     data_values: [{
         description: "determines when a point will be added",
-        options: ["silence", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "energy", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["silence", "emotion", "intensity", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
 
         //all possible
     }, {
         description: "used for X position",
-        options: ["emotion", "energy", "mfcc", "spectralCentroid", "spectralSlope", "spectralSpread", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["emotion", "intensity", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
         description: "used for Y position",
-        options: ["intensity", "speed", "zcr", "rms", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "loudness", "perceptualSpread", "perceptualSharpness"]
+        options: ["intensity", "emotion", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }, {
         description: "used for color",
-        options: ["intensity", "speed", "emotion", "perceptualSpread", "loudness", "spectralCentroid", "spectralSlope", "spectralSpread", "mfcc", "spectralRolloff", "spectralKurtosis", "spectralSkewness", "rms", "perceptualSpread", "perceptualSharpness"]
+        options: ["intensity", "emotion", "silence", "speed", "rms", "energy", "zcr", "amplitudeSpectrum", "powerSpectrum", "spectralCentroid", "spectralFlatness", "spectralSlope", "spectralRolloff", "spectralSpread", "spectralSkewness", "spectralKurtosis", "mfcc"]
     }],
 
     //extra visual options
@@ -29,17 +29,12 @@ ARTGEN.addPainter('vangoghnoi', {
         color1: {
             name: "Color 1",
             description: "used for determine the first color",
-            options: ["blue", "red", "purple", "monochrome", "green", "orange", "gold", "*"]
+            options: ["green", "red", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
         },
         color2: {
             name: "Color 2",
             description: "used for determine the second",
-            options: ["green", "red", "blue", "purple", "monochrome", "orange", "gold", "*"]
-        },
-        size: {
-            name: "Size",
-            description: "initial size",
-            options: ["100", "50", "200"]
+            options: ["red", "green", "orange", "yellow", "blue", "purple", "pink", "monochrome"]
         },
         style: {
             name: "Style",
@@ -50,11 +45,6 @@ ARTGEN.addPainter('vangoghnoi', {
             name: "Intervals",
             description: 'Draw Intervals?',
             options: ['no', "yes"]
-        },
-        composition: {
-            name: "Composition",
-            description: 'Composition type',
-            options: ['source-over', "darker"]
         }
     },
 
@@ -80,12 +70,37 @@ ARTGEN.addPainter('vangoghnoi', {
 
         var brush = this.brushes[0];
 
+        function easeIn(t, d) {
+            t /= d;
+            return d * t * t * t;
+        };
+
+        function easeOut(t, d) {
+            t /= d;
+            t--;
+            return d * (t * t * t + 1);
+        };
+
+        function easeOutIn(t, d) {
+            var half = d / 2;
+            if (t <= half) {
+                return easeOut(t, half);
+            } else {
+                return half + easeIn((t - half), half);
+            }
+        }
+
         var max_x = this.canvas.width,
             max_y = this.canvas.height,
             center_x = this.canvas.width / 2,
             center_y = this.canvas.height / 2,
-            target_x = data[1] / 100 * max_x || 0,
-            target_y = data[2] / 100 * max_y || 0;
+            target_x = easeOutIn(data[1], 100) / 100 * max_x || 0,
+            target_y = easeOutIn(data[2], 100) / 100 * max_y || 0,
+            ratio_x = 0.7;
+            ratio_y = 0.7;
+
+            target_x = target_x * 1/ratio_x;
+            target_y = target_y * 1/ratio_y;
 
         if (!this._instantiated) {
             this.first_time = time;
@@ -100,7 +115,7 @@ ARTGEN.addPainter('vangoghnoi', {
             this.ctx.fillStyle = color;
             this.ctx.fill();
 
-            this.ctx.globalCompositeOperation = this.options.composition;
+            // this.ctx.globalCompositeOperation = 'source-over';
 
             if (this.options.style === 'fill') {
                 this.color1 = randomColor({
@@ -125,10 +140,10 @@ ARTGEN.addPainter('vangoghnoi', {
                     luminosity: 'dark'
                 });
             }
-            
+
             brush.setColor(formatColor(this.color1));
             brush.start(target_x, target_y);
-            brush.addRandom(this.options.size);
+            brush.addRandom(200);
 
             this._instantiated = true;
             this._prevData = 1;
@@ -169,13 +184,13 @@ ARTGEN.addPainter('vangoghnoi', {
         this._prevData = data[0];
 
         var change = (data[3] / 100);
-        if(change > 1) change = 1;
-        if(change < 0) change = 0;
+        if (change > 1) change = 1;
+        if (change < 0) change = 0;
 
         var color = interpolateColors(this.color1, this.color2, change);
 
         if (this.options.intervals === "yes" && data[0] > 0) {
-            color = [255,255,255];
+            color = [255, 255, 255];
         }
 
 
@@ -190,7 +205,11 @@ ARTGEN.addPainter('vangoghnoi', {
         brush.setStyle(this.options.style);
         var alpha = (this.options.style === 'fill') ? 0.08 : 0.1;
         brush.setColor(formatColor(color, alpha));
-        brush.setTarget(target_x, target_y);
+
+        //only move if not silent when drawing 
+        if (this.options.intervals !== "yes" || data[0] === 0) {
+            brush.setTarget(target_x, target_y);
+        }
         brush.update();
         brush.draw();
     }

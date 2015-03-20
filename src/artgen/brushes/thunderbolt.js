@@ -46,13 +46,20 @@ ARTGEN.addBrush('thunderbolt', {
 		this.splitThisBolt = 0;
 
     },
-    update: function(canvas, ctx, data) {
+    update: function(canvas, ctx, data, color) {
+
+
+    	this.expressiveness = data[0]/100; //getting 0 to 100
+    	this.energy = data[1]/100; //getting 0 to 100
+    	this.silence = data[2]; //value in ms
+
 		// Plugged on channel 4 with silence data, 0 or 1
-		if (typeof data == "undefined" || data[0] == null || data == null) {
-			return;
-		}
-		if (data == 0) { this.silenceCounter++; }
-		else if (data == 1) { this.speakingCounter++; }
+		// if (typeof data == "undefined" || data[0] == null || data == null) {
+		// 	return;
+		// }
+
+		if (this.silence > 0) { this.silenceCounter++; }
+		else if (this.silence == 0) { this.speakingCounter++; }
 		
 		if (this.silenceCounter >= this.silenceCountMax) {
 			this.silenceCounter = 0;
@@ -67,8 +74,8 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		//if (this.expBuffer.length >= this.expBufferSize) { this.expBuffer.shift(); }
 		//this.expBuffer.push(parseFloat(data[1]));
-		this.simulateExpressiveness();
-		this.simulateEnergy();
+		// this.simulateExpressiveness();
+		// this.simulateEnergy();
 		//this.expBuffer.push(this.expressiveness);
 		
 		var births = Math.floor(Math.random()*(1 + this.birthRate));// 1 in ?
@@ -91,18 +98,23 @@ ARTGEN.addBrush('thunderbolt', {
 		this.movePositrons(canvas);
 		this.moveElectrons(canvas); 
     },
-    draw: function(ctx) {
-        this.drawElectrons(ctx);
+    draw: function(ctx, color) {
+
+    	this.color = color;
+        this.drawElectrons(ctx, color);
     },
     start: function(ctx, canvas, extraArgs) {
 		// For the brush thunderbolt, extraArgs == [{Number}, {Number}, {String}]
-		ctx.rect(0, 0, canvas.width, canvas.height);
-		ctx.fillStyle = "black";
-		ctx.fill();
+		// ctx.rect(0, 0, canvas.width, canvas.height);
+		// ctx.fillStyle = "black";
+		// ctx.fill();
 		
 		var xStart = extraArgs[0] * canvas.width;
 		var yStart = extraArgs[1] * canvas.height;
 		var way = extraArgs[2];
+
+		this.maxX = canvas.width;
+		this.maxY = canvas.height;
 		
 		for (var i = 0; i < this.boltsNb; i++) {
 			this.bolts.push([]);
@@ -121,15 +133,15 @@ ARTGEN.addBrush('thunderbolt', {
 		
 		this.feed(this.generation1perBolt);
     },
-	simulateExpressiveness: function() {
-		this.expCounter++;
-		this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
+	// simulateExpressiveness: function() {
+	// 	this.expCounter++;
+	// 	this.expressiveness = 0.5 + 0.4 * Math.sin(2*Math.PI*this.expCounter/this.expressivenessVar) * Math.sin(55/67*Math.PI*this.expCounter/this.expressivenessVar);
 		
-	},
-	simulateEnergy: function() {
-		this.energyCounter++;
-		this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
-	},
+	// },
+	// simulateEnergy: function() {
+	// 	this.energyCounter++;
+	// 	this.energy = 0.5 + 0.4 * Math.sin(2*Math.PI*this.energyCounter/this.energyVar) * Math.cos(2/8.5*Math.PI*this.energyCounter/this.energyVar);
+	// },
 	addElectron: function(boltKey, x, y, xSpeed, ySpeed) {
 		this.bolts[boltKey].push({
 			x: x,
@@ -145,7 +157,10 @@ ARTGEN.addBrush('thunderbolt', {
 		for (var key1 = 0; key1 < this.positrons.length; key1++) {
 			var positron = this.positrons[key1];
 			// Angle in desired range. If expressiveness remains around 0.5, the bolt with hore an horizontal overall motion
-			var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
+			// var positronSpeedAng = 2*Math.PI/360 * ( this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
+
+			//TODO: Understand Why these angles
+			var positronSpeedAng = 2*Math.PI/360 * ( 60 + this.minAngleDeg + (this.maxAngleDeg - this.minAngleDeg) * this.expressiveness ) + positron.angleOffset;
 			
 			// Left or right? Can be improved, using directly angle launch from painter parameter
 			positronSpeedAng += (positron.way == "right" ? 0 : Math.PI);
@@ -154,6 +169,11 @@ ARTGEN.addBrush('thunderbolt', {
 			positron.ySpeed = positron.speed * Math.sin(positronSpeedAng); 
 			positron.x += positron.xSpeed;
 			positron.y += positron.ySpeed;
+
+			//TODO: Check if this makes sense
+			positron.x = (positron.x > this.maxX || positron.x < 0) ? positron.x % this.maxX : positron.x;
+			positron.y = (positron.y > this.maxY || positron.y < 0) ? positron.y % this.maxY : positron.y;
+
 			positron.r = this.energyToPositronRadiusRate * this.energy;
 		}
 	},
@@ -217,12 +237,13 @@ ARTGEN.addBrush('thunderbolt', {
 		}
 		
 	},
-	drawElectrons: function(ctx) {
+	drawElectrons: function(ctx, color) {
+
 		// In bolts
 		for (key in this.bolts) {
 			for (key2 in this.bolts[key]) {
 				var electron = this.bolts[key][key2];
-				ctx.strokeStyle = "rgba(255, 255, 255, " + this.beamOpacity + ")";
+				ctx.strokeStyle = "rgba("+ this.color.join(",") +", " + this.beamOpacity + ")";
 				ctx.lineWidth = 1;
 				ctx.beginPath();
 				ctx.moveTo(electron.xLast, electron.yLast);
@@ -235,7 +256,7 @@ ARTGEN.addBrush('thunderbolt', {
 		for (key3 in this.falling) {
 			for (key4 in this.falling[key3]) {
 				var electron = this.falling[key3][key4];
-				ctx.strokeStyle = "rgba(255, 255, 255, " + this.fallingParticlesOpacity + ")";
+				ctx.strokeStyle = "rgba("+ this.color.join(",") +", " + this.fallingParticlesOpacity + ")";
 				ctx.lineWidth = 1;
 				ctx.beginPath();
 				ctx.moveTo(electron.xLast, electron.yLast);
